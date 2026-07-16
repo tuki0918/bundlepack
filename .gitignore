@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Swift and Xcode build output
+.build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# Compiled apps and distributable archives
+*.app
+*.zip
+*.dmg
+*.pkg
+*.xcarchive
+*.xcresult
+*.bundlepack
+
+# Local QA screenshots
+*-qa.png
+*-qa-*.png
+
+# Signing credentials
+*.p12
+*.mobileprovision
