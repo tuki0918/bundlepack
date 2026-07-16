@@ -5,9 +5,9 @@ BundlePack is a native macOS utility for collecting files and folders into a sha
 ## Highlights
 
 - Add multiple files and folders with a file picker or drag and drop.
-- Choose or drop a custom package icon displayed by Finder.
+- Choose or drop a custom package icon displayed by Finder and the standard macOS preview.
 - Encrypt file names, metadata, ZIP structure, and file contents with AES-256-GCM.
-- Create unencrypted `.bundlepack` files compatible with standard ZIP tools.
+- Create unencrypted `.bundlepack` files that remain compatible with standard ZIP tools.
 - Generate strong passwords with configurable length, digit count, and symbol count.
 - Open `.bundlepack` files by double-clicking, choosing a file, or dragging one into the app.
 - Run natively on both Apple silicon and Intel Macs.
@@ -33,8 +33,6 @@ The Create screen accepts files, folders, and a custom package icon by drag and 
 | Unlock an encrypted package | Review and extract validated contents |
 | --- | --- |
 | ![Password entry screen for an encrypted BundlePack archive](Docs/Images/unlock.png) | ![Open screen showing validated demo package contents](Docs/Images/open-demo.png) |
-
-The screenshots use generated sample data in macOS dark appearance. No personal files or real credentials are included.
 
 ## Requirements
 
@@ -81,7 +79,7 @@ The notarized archive is written to `.build/release/BundlePack-<version>.zip`. S
 
 1. Copy `BundlePack.app` to `/Applications`.
 2. Launch it once so macOS registers the `.bundlepack` document type.
-3. If necessary, enable **BundlePack Thumbnail** in **System Settings > General > Login Items & Extensions > Quick Look**.
+3. Optionally enable **BundlePack Thumbnail** in **System Settings > General > Login Items & Extensions > Quick Look** to display embedded package icons in Finder.
 
 Keep only one installed copy that uses the same bundle identifier.
 
@@ -89,9 +87,11 @@ Keep only one installed copy that uses the same bundle identifier.
 
 BundlePack intentionally does not ship a custom Quick Look Preview extension. Pressing Space uses macOS's standard file preview instead of a BundlePack-specific content view. This generic document-style presentation is intentional and remains consistent for encrypted and unencrypted packages.
 
+macOS lists Thumbnail extensions under the Quick Look settings. Enabling **BundlePack Thumbnail** only provides package icons to Finder and other thumbnail surfaces; it does not enable a custom content preview. Creating, opening, encrypting, and extracting packages works without the extension.
+
 <img src="Docs/Images/quick-look.png" width="720" alt="Standard macOS Quick Look preview of a BundlePack document">
 
-The Thumbnail extension supplies the package's public icon to Finder and to preview surfaces that request a thumbnail. Quick Look does not display BundlePack metadata or an internal file list.
+The extension never displays BundlePack metadata or an internal file list.
 
 ### Finder List View
 
