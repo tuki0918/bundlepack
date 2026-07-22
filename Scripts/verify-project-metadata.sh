@@ -59,6 +59,8 @@ build_script_macos_minimums="$(sed -n 's/.*-target "[$]arch-apple-macos\([^"]*\)
   || fail "macOS command-line build targets do not all equal $EXPECTED_MACOS_MINIMUM"
 
 windows_app_minimum="$(xmllint --xpath 'string(/Project/PropertyGroup/TargetPlatformMinVersion)' "$WINDOWS_APP_PROJECT")"
+windows_default_icon_updates="$(xmllint --xpath 'count(/Project/ItemGroup/Content[@Update="Assets/DefaultPackageIcon.png"])' "$WINDOWS_APP_PROJECT")"
+windows_default_icon_includes="$(xmllint --xpath 'count(/Project/ItemGroup/Content[@Include="Assets/DefaultPackageIcon.png"])' "$WINDOWS_APP_PROJECT")"
 windows_thumbnail_framework="$(xmllint --xpath 'string(/Project/PropertyGroup/TargetFramework)' "$WINDOWS_THUMBNAIL_PROJECT")"
 windows_thumbnail_tests_framework="$(xmllint --xpath 'string(/Project/PropertyGroup/TargetFramework)' "$WINDOWS_THUMBNAIL_TESTS_PROJECT")"
 windows_installer_minimum="$(sed -n 's/^MinVersion=//p' "$WINDOWS_INSTALLER")"
@@ -66,6 +68,8 @@ expected_windows_framework_suffix="windows$EXPECTED_WINDOWS_MINIMUM.0"
 
 [[ "$windows_app_minimum" == "$EXPECTED_WINDOWS_MINIMUM.0" ]] \
   || fail "the Windows app minimum is $windows_app_minimum instead of $EXPECTED_WINDOWS_MINIMUM.0"
+[[ "$windows_default_icon_updates" == "1" && "$windows_default_icon_includes" == "0" ]] \
+  || fail "the Windows default icon must update the implicit Content item instead of including a duplicate"
 [[ "$windows_thumbnail_framework" == *"-$expected_windows_framework_suffix" ]] \
   || fail "the thumbnail provider target framework does not encode Windows $EXPECTED_WINDOWS_MINIMUM.0"
 [[ "$windows_thumbnail_tests_framework" == *"-$expected_windows_framework_suffix" ]] \
