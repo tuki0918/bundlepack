@@ -5,9 +5,9 @@ extension ZipArchiveInspector {
     private static let endOfCentralDirectory: UInt32 = 0x0605_4b50
     private static let centralFileHeader: UInt32 = 0x0201_4b50
     private static let localFileHeader: UInt32 = 0x0403_4b50
-    private static let maximumEntries = 10_000
-    private static let maximumExpandedSize: UInt64 = 20 * 1_024 * 1_024 * 1_024
-    private static let maximumMetadataSize: UInt64 = 16 * 1_024 * 1_024
+    static let maximumEntries = 10_000
+    static let maximumExpandedSize: UInt64 = 20 * 1_024 * 1_024 * 1_024
+    static let maximumMetadataSize: UInt64 = 16 * 1_024 * 1_024
     private static let crc32Table: [UInt32] = (0..<256).map { value in
         var crc = UInt32(value)
         for _ in 0..<8 {

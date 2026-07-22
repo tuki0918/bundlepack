@@ -1,0 +1,62 @@
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: "23 4 * * 1"
+
+permissions:
+  contents: read
+  packages: read
+  security-events: write
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            runner: windows-latest
+          - language: swift
+            runner: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@7188fc363630916deb702c7fdcf4e481b751f97a # v4.37.1
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: manual
+
+      - name: Build C# application
+        if: matrix.language == 'csharp'
+        shell: pwsh
+        run: .\Windows\Scripts\Build.ps1 -Platforms x64
+
+      - name: Build Swift application
+        if: matrix.language == 'swift'
+        run: ./macOS/Scripts/build.sh
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@7188fc363630916deb702c7fdcf4e481b751f97a # v4.37.1
+        with:
+          category: /language:${{ matrix.language }}

@@ -16,9 +16,10 @@ unsigned development builds, not approved release assets.
 
 1. Confirm the version and release notes in `CHANGELOG.md`.
 2. Run `./macOS/Scripts/test.sh` and `./macOS/Scripts/build.sh` on macOS.
-3. Commit and push the intended files without signing credentials or generated build output.
-4. Wait for every job in `.github/workflows/ci.yml` to pass.
-5. Create the Git tag and GitHub release without binary attachments. GitHub provides source-code ZIP and tar archives automatically.
+3. Run `.\Windows\Scripts\Test.ps1` and `.\Windows\Scripts\Build.ps1` on Windows.
+4. Commit and push the intended files without signing credentials or generated build output.
+5. Wait for CI, dependency review, and CodeQL checks to pass.
+6. Create the Git tag and GitHub release without binary attachments. GitHub provides source-code ZIP and tar archives automatically.
 
 ## macOS binary release
 

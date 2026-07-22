@@ -58,7 +58,8 @@ Pull requests and pushes are checked on both operating systems by GitHub
 Actions. Windows opens the checked-in macOS fixtures and creates Windows
 fixtures; macOS then opens those Windows-generated files. Successful workflow
 runs provide short-lived test applications for macOS universal, Windows x64,
-Windows ARM64, and Windows x64/ARM64 installers.
+Windows ARM64, and Windows x64/ARM64 installers. Pull requests also receive
+dependency review, and CodeQL analyzes the native C# and Swift sources.
 
 See [Docs/RELEASE.md](Docs/RELEASE.md) before publishing source or binaries.
 CI applications are ad-hoc signed or unsigned test builds, not release binaries.

@@ -6,6 +6,7 @@ REPOSITORY_ROOT="${MACOS_ROOT:h}"
 TEST_ROOT="${BUNDLEPACK_TEST_DIR:-$REPOSITORY_ROOT/.build/tests}"
 CACHE="$TEST_ROOT/module-cache"
 ICON="$MACOS_ROOT/BundlePack/Resources/DefaultPackageIcon.png"
+FORMAT_EXPECTATIONS="$REPOSITORY_ROOT/Fixtures/FormatV1.json"
 
 source "$MACOS_ROOT/Scripts/swift-sources.sh"
 
@@ -22,6 +23,7 @@ xcrun swiftc \
   -o "$TEST_ROOT/end-to-end-smoke" \
   "$MACOS_ROOT/Tests/EndToEndSmoke.swift" \
   "$MACOS_ROOT/Tests/EndToEndSmoke.ArchiveValidation.swift" \
+  "$MACOS_ROOT/Tests/EndToEndSmoke.FormatContract.swift" \
   "$MACOS_ROOT/Tests/EndToEndSmoke.Support.swift" \
   "${BUNDLEPACK_CORE_SOURCES[@]}" \
   -framework AppKit \
@@ -29,7 +31,7 @@ xcrun swiftc \
   -framework CryptoKit \
   -framework Security
 
-"$TEST_ROOT/end-to-end-smoke" "$ICON"
+"$TEST_ROOT/end-to-end-smoke" "$ICON" "$FORMAT_EXPECTATIONS"
 
 xcrun swiftc \
   -module-cache-path "$CACHE" \

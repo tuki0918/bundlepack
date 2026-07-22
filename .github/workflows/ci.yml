@@ -45,60 +45,13 @@ jobs:
             throw "PowerShell script validation failed."
           }
 
-      - name: Build and run Windows compatibility tests
+      - name: Run Windows tests and build x64 application
         shell: pwsh
-        run: |
-          dotnet restore .\Windows\BundlePack.Windows.sln -p:NuGetAudit=true -p:NuGetAuditMode=all -p:Platform=x64
-          dotnet build .\Windows\BundlePack.Core.Tests\BundlePack.Core.Tests.csproj -c Release
-          dotnet run --project .\Windows\BundlePack.Core.Tests\BundlePack.Core.Tests.csproj -c Release --no-build -- --repo . --fixtures .\Fixtures\Compatibility\macOS --output .\.build\windows-fixtures
+        run: .\Windows\Scripts\Test.ps1 -Platform x64
 
-      - name: Build WinUI app (x64)
+      - name: Build ARM64 application and thumbnail provider
         shell: pwsh
-        run: dotnet build .\Windows\BundlePack.Windows\BundlePack.Windows.csproj -c Release -p:Platform=x64
-
-      - name: Build and test Explorer thumbnail provider (x64)
-        shell: pwsh
-        run: |
-          dotnet run `
-            --project .\Windows\BundlePack.Thumbnail.Tests\BundlePack.Thumbnail.Tests.csproj `
-            -c Release `
-            -p:Platform=x64 `
-            -- `
-            --fixtures .\.build\windows-fixtures `
-            --fixtures .\Fixtures\Compatibility\macOS
-
-      - name: Test Windows file association
-        shell: pwsh
-        run: |
-          $executable = Get-ChildItem `
-            .\Windows\BundlePack.Windows\bin\x64\Release `
-            -Filter BundlePack.Windows.exe `
-            -Recurse |
-            Select-Object -First 1
-          if ($null -eq $executable) {
-            throw "The x64 BundlePack executable was not found."
-          }
-
-          $thumbnailProvider = Get-ChildItem `
-            .\Windows\BundlePack.Thumbnail\bin\x64\Release `
-            -Filter BundlePack.Thumbnail.comhost.dll `
-            -Recurse |
-            Select-Object -First 1
-          if ($null -eq $thumbnailProvider) {
-            throw "The x64 BundlePack thumbnail provider was not found."
-          }
-
-          .\Windows\Tests\Test-FileAssociation.ps1 `
-            -ExecutablePath $executable.FullName `
-            -ThumbnailProviderPath $thumbnailProvider.FullName
-
-      - name: Build WinUI app (ARM64)
-        shell: pwsh
-        run: dotnet build .\Windows\BundlePack.Windows\BundlePack.Windows.csproj -c Release -p:Platform=ARM64
-
-      - name: Build Explorer thumbnail provider (ARM64)
-        shell: pwsh
-        run: dotnet build .\Windows\BundlePack.Thumbnail\BundlePack.Thumbnail.csproj -c Release -p:Platform=ARM64
+        run: .\Windows\Scripts\Build.ps1 -Platforms ARM64
 
       - name: Prepare Windows CI applications
         shell: pwsh

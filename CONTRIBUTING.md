@@ -18,27 +18,30 @@ Run the repository checks before opening a pull request:
 ```
 
 The test script also verifies that macOS, the thumbnail extension, Xcode, and
-Windows share the same release version and macOS build number. Swift source
-registrations are checked against the filesystem, command-line build, and
-Xcode project so newly added files cannot be silently omitted.
+Windows share the same release version, platform minimums, and macOS build
+number. Swift source registrations are checked against the filesystem,
+command-line build, and Xcode project so newly added files cannot be silently
+omitted. Both native test suites verify their v1 constants against
+`Fixtures/FormatV1.json`.
 
 The build output is written to `.build/BundlePack.app` and is ad-hoc signed for local testing.
 
 Run the Windows core checks from a Developer PowerShell prompt:
 
 ```powershell
-dotnet build .\Windows\BundlePack.Core.Tests\BundlePack.Core.Tests.csproj -c Release
-dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\Fixtures\Compatibility\macOS --output .\.build\windows-fixtures
-dotnet build .\Windows\BundlePack.Windows\BundlePack.Windows.csproj -c Release -p:Platform=x64
-dotnet run --project .\Windows\BundlePack.Thumbnail.Tests -c Release -p:Platform=x64 -- --fixtures .\.build\windows-fixtures --fixtures .\Fixtures\Compatibility\macOS
+.\Windows\Scripts\Test.ps1
+.\Windows\Scripts\Build.ps1
 ```
+
+Windows restores use committed `packages.lock.json` files. Regenerate both x64
+and ARM64 lock graphs with `--force-evaluate` after an intentional package
+change, then review and commit the resulting lock-file changes.
 
 When changing the Windows installer, build both application architectures and
 then run the packaging and installer checks from a Developer PowerShell prompt:
 
 ```powershell
-dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=x64
-dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=ARM64
+.\Windows\Scripts\Build.ps1
 .\Windows\Scripts\Package-CIArtifacts.ps1
 .\Windows\Scripts\Build-Installers.ps1
 .\Windows\Tests\Test-Installer.ps1 `

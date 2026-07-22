@@ -4,8 +4,8 @@ import Foundation
 @main
 enum EndToEndSmoke {
     static func main() async throws {
-        guard CommandLine.arguments.count == 2 else {
-            throw TestError("A path to DefaultPackageIcon.png is required.")
+        guard CommandLine.arguments.count == 3 else {
+            throw TestError("Paths to DefaultPackageIcon.png and FormatV1.json are required.")
         }
 
         let fileManager = FileManager.default
@@ -20,6 +20,9 @@ enum EndToEndSmoke {
         let extractParent = root.appendingPathComponent("extracted", isDirectory: true)
         let decryptedArchive = root.appendingPathComponent("decrypted.zip")
         let icon = URL(fileURLWithPath: CommandLine.arguments[1])
+        let formatExpectations = try loadAndVerifyFormatExpectations(
+            at: URL(fileURLWithPath: CommandLine.arguments[2])
+        )
         let password = "Correct-Horse-Battery-2026!"
 
         try fileManager.createDirectory(at: nested, withIntermediateDirectories: true)
@@ -53,6 +56,7 @@ enum EndToEndSmoke {
         try require(encryptedInfo.originalArchiveSize > 0, "The original archive size is missing.")
 
         let encryptedData = try Data(contentsOf: archive, options: [.mappedIfSafe])
+        try verifyEncryptedHeader(encryptedData, expectations: formatExpectations)
         try require(encryptedData.prefix(8) == Data("BPKENC01".utf8), "The encrypted container signature is missing.")
         try require(encryptedData.prefix(4) != Data([0x50, 0x4b, 0x03, 0x04]), "A ZIP signature is exposed at the outer container level.")
         try require(encryptedData.range(of: Data("hello.txt".utf8)) == nil, "A file name is exposed as plaintext.")

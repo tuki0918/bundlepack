@@ -104,7 +104,9 @@ struct PasswordGeneratorSheet: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
-                .disabled(generatedPassword.count < 12)
+                .disabled(
+                    generatedPassword.count < BundlePackEncryptedContainer.minimumPasswordCharacters
+                )
             }
         }
         .padding(26)

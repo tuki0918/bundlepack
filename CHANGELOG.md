@@ -53,6 +53,10 @@ All notable changes to BundlePack are documented in this file.
 - Native macOS and Windows CI jobs run independently, with bidirectional interoperability enforced by a separate compatibility job.
 - macOS and Windows smoke tests are split into focused scenario and support sources, and Windows UI operation state and display models are separated from the main XAML code-behind files.
 - Repository metadata checks now verify the minimum supported macOS and Windows versions across project, build, test, and installer declarations.
+- Windows build and test workflows now have dedicated PowerShell entry points shared by contributors and CI.
+- Both native test suites verify version 1 format constants and generated encrypted headers against a neutral checked-in expectation.
+- Windows NuGet dependency graphs are committed and restored in locked mode for x64 and ARM64 reproducibility.
+- CodeQL scans the C# and Swift applications, and pull requests receive dependency review.
 
 ### Security
 

@@ -13,6 +13,10 @@ var repositoryRoot = options.TryGetValue("repo", out var explicitRoot)
 var fixturesDirectory = options.TryGetValue("fixtures", out var explicitFixtures)
     ? Path.GetFullPath(explicitFixtures)
     : Path.Combine(repositoryRoot, "Fixtures", "Compatibility", "macOS");
+var formatExpectationsPath = options.TryGetValue("format-expectations", out var explicitExpectations)
+    ? Path.GetFullPath(explicitExpectations)
+    : Path.Combine(repositoryRoot, "Fixtures", "FormatV1.json");
+var formatExpectations = FormatContractExpectations.LoadAndVerify(formatExpectationsPath);
 var outputDirectory = options.TryGetValue("output", out var explicitOutput)
     ? Path.GetFullPath(explicitOutput)
     : null;
@@ -222,6 +226,7 @@ try
     }
 
     var encryptedBytes = await File.ReadAllBytesAsync(encryptedPath);
+    formatExpectations.VerifyEncryptedHeader(encryptedBytes);
     Require(encryptedBytes.AsSpan(0, 8).SequenceEqual("BPKENC01"u8), "The encrypted signature is missing.");
     Require(encryptedBytes.AsSpan().IndexOf("hello.txt"u8) < 0, "An encrypted file name is visible in plaintext.");
     Require(encryptedBytes.AsSpan().IndexOf("Hello from BundlePack"u8) < 0, "Encrypted file data is visible in plaintext.");

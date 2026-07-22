@@ -216,7 +216,7 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Password" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                                <PasswordBox x:Name="PasswordBox" Grid.Row="0" Grid.Column="1" PasswordRevealMode="Peek" PlaceholderText="At least 12 characters" />
+                                <PasswordBox x:Name="PasswordBox" Grid.Row="0" Grid.Column="1" PasswordRevealMode="Peek" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Confirm" HorizontalAlignment="Right" VerticalAlignment="Center" />
                                 <PasswordBox x:Name="ConfirmPasswordBox" Grid.Row="1" Grid.Column="1" PasswordRevealMode="Peek" PlaceholderText="Enter the same password again" />
                                 <Button Grid.Row="2" Grid.Column="1" Content="Generate Password…" HorizontalAlignment="Right" Click="GeneratePassword_Click" />

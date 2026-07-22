@@ -118,7 +118,9 @@ extension BundlePackEncryptedContainer {
 
     static func deriveKey(password: String, salt: Data, iterations: UInt32) throws -> SymmetricKey {
         let normalized = normalizedPassword(password)
-        guard normalized.count >= 12 else { throw BundlePackEncryptionError.passwordTooShort }
+        guard normalized.count >= minimumPasswordCharacters else {
+            throw BundlePackEncryptionError.passwordTooShort
+        }
 
         var keyBytes = [UInt8](repeating: 0, count: 32)
         let status: Int32 = normalized.withCString { passwordPointer in

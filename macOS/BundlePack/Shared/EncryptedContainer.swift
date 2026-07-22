@@ -22,7 +22,7 @@ enum BundlePackEncryptionError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .passwordTooShort:
-            return "The password must contain at least 12 characters."
+            return "The password must contain at least \(BundlePackEncryptedContainer.minimumPasswordCharacters) characters."
         case .invalidContainer:
             return "The file is not an encrypted BundlePack or is damaged."
         case .unsupportedVersion:
@@ -44,6 +44,7 @@ enum BundlePackEncryptionError: LocalizedError {
 }
 
 enum BundlePackEncryptedContainer {
+    static let minimumPasswordCharacters = 12
     static let magic = Data("BPKENC01".utf8)
     static let version: UInt16 = 1
     static let flags: UInt16 = 1
@@ -80,7 +81,7 @@ enum BundlePackEncryptedContainer {
         progress: BundlePackProgressHandler? = nil
     ) throws -> EncryptedBundlePackInfo {
         try Task.checkCancellation()
-        guard normalizedPassword(password).count >= 12 else {
+        guard normalizedPassword(password).count >= minimumPasswordCharacters else {
             throw BundlePackEncryptionError.passwordTooShort
         }
         guard !iconData.isEmpty,

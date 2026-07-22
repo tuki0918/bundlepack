@@ -15,7 +15,7 @@ typealias BundlePackProgressHandler = @Sendable (BundlePackOperationProgress) ->
 enum BundlePackIconValidator {
     private static let pngSignature = Data([137, 80, 78, 71, 13, 10, 26, 10])
     private static let ihdr = Data("IHDR".utf8)
-    private static let maximumSize = 16 * 1_024 * 1_024
+    static let maximumSize = 16 * 1_024 * 1_024
 
     static func isValidPNG(_ data: Data) -> Bool {
         guard data.count >= 24,

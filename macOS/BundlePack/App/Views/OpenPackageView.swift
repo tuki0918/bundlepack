@@ -76,7 +76,10 @@ struct OpenPackageView: View {
                     Label("Unlock", systemImage: "lock.open.fill")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(model.unlockPassword.count < 12 || model.isWorking)
+                .disabled(
+                    model.unlockPassword.count < BundlePackEncryptedContainer.minimumPasswordCharacters
+                        || model.isWorking
+                )
             }
 
             HStack(spacing: 14) {

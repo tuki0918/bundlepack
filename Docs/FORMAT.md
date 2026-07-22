@@ -55,6 +55,11 @@ opened by the macOS test job. Dedicated Unicode-password fixtures use opposite
 composed/decomposed forms to verify NFC normalization in both directions. The
 shared fixture passwords are test-only and documented beside the fixtures.
 
+`Fixtures/FormatV1.json` mirrors the numeric and identifier constants in this
+document so both native test suites can detect implementation drift. This
+document remains the normative format specification; the JSON file is a test
+expectation and must be updated only with an intentional format-contract change.
+
 ## Unencrypted packages
 
 An unencrypted package is a standard ZIP archive. `icon.png` and `manifest.json` are stored without compression, while payload entries may use normal ZIP compression.

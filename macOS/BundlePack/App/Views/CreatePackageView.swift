@@ -103,9 +103,15 @@ struct CreatePackageView: View {
                             HStack(spacing: 8) {
                                 Group {
                                     if isPasswordVisible {
-                                        TextField("At least 12 characters", text: $model.encryptionPassword)
+                                        TextField(
+                                            "At least \(BundlePackEncryptedContainer.minimumPasswordCharacters) characters",
+                                            text: $model.encryptionPassword
+                                        )
                                     } else {
-                                        SecureField("At least 12 characters", text: $model.encryptionPassword)
+                                        SecureField(
+                                            "At least \(BundlePackEncryptedContainer.minimumPasswordCharacters) characters",
+                                            text: $model.encryptionPassword
+                                        )
                                     }
                                 }
                                 .textFieldStyle(.roundedBorder)
@@ -202,13 +208,15 @@ struct CreatePackageView: View {
     }
 
     private var passwordIsValid: Bool {
-        !model.encryptionEnabled || (model.encryptionPassword.count >= 12
+        !model.encryptionEnabled || (model.encryptionPassword.count >= BundlePackEncryptedContainer.minimumPasswordCharacters
             && model.encryptionPassword == model.encryptionPasswordConfirmation
         )
     }
 
     private var passwordStatus: String {
-        if model.encryptionPassword.count < 12 { return "At least 12 characters required" }
+        if model.encryptionPassword.count < BundlePackEncryptedContainer.minimumPasswordCharacters {
+            return "At least \(BundlePackEncryptedContainer.minimumPasswordCharacters) characters required"
+        }
         if model.encryptionPassword != model.encryptionPasswordConfirmation { return "Password confirmation does not match" }
         return "Ready to encrypt"
     }

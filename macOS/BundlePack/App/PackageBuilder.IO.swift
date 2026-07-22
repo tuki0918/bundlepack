@@ -6,7 +6,8 @@ extension PackageBuilder {
     private static let maximumIconSourceBytes = 32 * 1_024 * 1_024
     private static let maximumIconSourceDimension = 16_384.0
     private static let maximumIconSourcePixels = 100_000_000.0
-    private static let maximumTotalInputBytes: UInt64 = 20 * 1_024 * 1_024 * 1_024
+    static let maximumInputFileBytes = UInt64(UInt32.max) - 1
+    static let maximumTotalInputBytes: UInt64 = 20 * 1_024 * 1_024 * 1_024
 
     static func validateInput(_ url: URL) throws {
         try Task.checkCancellation()
@@ -16,7 +17,7 @@ extension PackageBuilder {
         if values.isSymbolicLink == true {
             throw PackageBuilderError.symbolicLink(url.path)
         }
-        if let size = values.fileSize, UInt64(size) >= UInt64(UInt32.max) {
+        if let size = values.fileSize, UInt64(size) > maximumInputFileBytes {
             throw PackageBuilderError.fileTooLarge(url.path)
         }
         guard values.isDirectory == true else { return }
@@ -41,7 +42,7 @@ extension PackageBuilder {
             if childValues.isSymbolicLink == true {
                 throw PackageBuilderError.symbolicLink(child.path)
             }
-            if let size = childValues.fileSize, UInt64(size) >= UInt64(UInt32.max) {
+            if let size = childValues.fileSize, UInt64(size) > maximumInputFileBytes {
                 throw PackageBuilderError.fileTooLarge(child.path)
             }
         }
@@ -96,7 +97,7 @@ extension PackageBuilder {
         }
         guard values.isDirectory == true else {
             let size = UInt64(values.fileSize ?? 0)
-            guard size < UInt64(UInt32.max) else {
+            guard size <= maximumInputFileBytes else {
                 throw PackageBuilderError.fileTooLarge(url.path)
             }
             return size
@@ -152,7 +153,7 @@ extension PackageBuilder {
     ) throws {
         try Task.checkCancellation()
         let expectedSize = UInt64(try source.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0)
-        guard expectedSize < UInt64(UInt32.max) else {
+        guard expectedSize <= maximumInputFileBytes else {
             throw PackageBuilderError.fileTooLarge(source.path)
         }
         try FileManager.default.createDirectory(

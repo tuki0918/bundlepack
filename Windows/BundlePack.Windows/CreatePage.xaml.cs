@@ -18,6 +18,8 @@ public sealed partial class CreatePage : UserControl
     public CreatePage()
     {
         InitializeComponent();
+        PasswordBox.PlaceholderText =
+            $"At least {BundlePackConstants.MinimumPasswordCharacters} characters";
         RootContent.AddHandler(
             UIElement.PointerWheelChangedEvent,
             new PointerEventHandler(RootContent_PointerWheelChanged),
@@ -323,7 +325,8 @@ public sealed partial class CreatePage : UserControl
 
         if (encrypted && !FileHelpersForUi.HasMinimumPasswordLength(PasswordBox.Password))
         {
-            await ShowErrorAsync("The password must contain at least 12 characters.");
+            await ShowErrorAsync(
+                $"The password must contain at least {BundlePackConstants.MinimumPasswordCharacters} characters.");
             return;
         }
 

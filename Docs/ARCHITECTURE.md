@@ -44,9 +44,12 @@ Windows WinUI app ─┘
 - `Windows/Scripts` contains optional per-user Windows shell registration tools.
 - `Windows/Tests` contains Windows-only shell and installer integration checks.
 - `Fixtures/Compatibility/macOS` contains macOS-created fixtures consumed by C# tests.
+- `Fixtures/FormatV1.json` contains neutral v1 constants verified by both native test suites.
 - `Docs/FORMAT.md` is the normative cross-platform format contract.
 - `global.json` pins Windows command-line builds to the .NET 10 SDK family.
 - `Scripts` contains repository-wide cleanup, icon generation, and metadata validation tools.
+- `Windows/Scripts/Build.ps1` and `Windows/Scripts/Test.ps1` are the standard
+  Windows build and verification entry points used by contributors and CI.
 - `macOS/Scripts/swift-sources.sh` is the source of truth for Swift command-line
   builds and is validated against the Xcode project during tests.
 
@@ -78,6 +81,9 @@ following checks:
 Each platform also creates an encrypted Unicode-password fixture and opens the
 other platform's fixture with a canonically equivalent password in the opposite
 Unicode composition form.
+
+Pull requests also receive dependency review. CodeQL builds and analyzes the
+C# and Swift applications independently on their native runners.
 
 Format changes must update `Docs/FORMAT.md`, both native implementations, the
 fixture generators, and the bidirectional tests in the same pull request. A new

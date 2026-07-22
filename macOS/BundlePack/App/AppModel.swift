@@ -55,7 +55,7 @@ final class AppModel: ObservableObject {
             return
         }
         if encryptionEnabled {
-            guard encryptionPassword.count >= 12 else {
+            guard encryptionPassword.count >= BundlePackEncryptedContainer.minimumPasswordCharacters else {
                 errorMessage = BundlePackEncryptionError.passwordTooShort.localizedDescription
                 return
             }
@@ -185,7 +185,7 @@ final class AppModel: ObservableObject {
 
     func unlockArchive() {
         guard !isWorking, let lockedArchive else { return }
-        guard unlockPassword.count >= 12 else {
+        guard unlockPassword.count >= BundlePackEncryptedContainer.minimumPasswordCharacters else {
             errorMessage = BundlePackEncryptionError.passwordTooShort.localizedDescription
             return
         }

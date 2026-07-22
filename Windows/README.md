@@ -14,6 +14,7 @@ UI code. Return to the [project overview](../README.md).
 - `BundlePack.Thumbnail.Tests` renders encrypted and unencrypted fixtures into 32-bit DIB sections on Windows.
 - `BundlePack.Core.Tests` creates Windows packages and opens the checked-in macOS compatibility fixtures.
 - `Installer` contains the shared and architecture-specific Inno Setup definitions.
+- `Scripts/Build.ps1` and `Scripts/Test.ps1` provide the standard one-command build and verification entry points.
 - `Directory.Build.props` centralizes shared compiler, version, repository, and warning settings.
 
 ## Requirements
@@ -33,9 +34,24 @@ Open `BundlePack.Windows.sln` in Visual Studio, select `BundlePack.Windows`, cho
 From a Developer PowerShell prompt:
 
 ```powershell
-dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=x64
-dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=ARM64
-dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\Fixtures\Compatibility\macOS
+.\Windows\Scripts\Test.ps1
+.\Windows\Scripts\Build.ps1
+```
+
+`Test.ps1` restores dependencies in locked mode, builds the x64 application,
+runs the core compatibility and thumbnail tests, and verifies temporary
+current-user file-association registration and cleanup. Pass
+`-SkipFileAssociation` when registry integration is intentionally out of scope.
+`Build.ps1` builds x64 and ARM64 by default; use `-Platforms x64` or
+`-Platforms ARM64` to build one architecture.
+
+NuGet dependency graphs are recorded in each project's `packages.lock.json`.
+After an intentional package change, regenerate and review both platform
+graphs before committing them:
+
+```powershell
+dotnet restore .\Windows\BundlePack.Windows.sln -p:Platform=x64 --force-evaluate
+dotnet restore .\Windows\BundlePack.Windows.sln -p:Platform=ARM64 --force-evaluate
 ```
 
 The WinUI project is currently unpackaged. It creates new archives and supports
@@ -88,6 +104,7 @@ Windows with Inno Setup 6.3 or later after preparing the raw CI application
 directories:
 
 ```powershell
+.\Windows\Scripts\Build.ps1
 .\Windows\Scripts\Package-CIArtifacts.ps1
 .\Windows\Scripts\Build-Installers.ps1
 ```

@@ -146,7 +146,10 @@ public sealed partial class OpenPage : UserControl, IDisposable
 
         if (!FileHelpersForUi.HasMinimumPasswordLength(UnlockPasswordBox.Password))
         {
-            ShowStatus(InfoBarSeverity.Warning, "Password required", "Enter a password containing at least 12 characters.");
+            ShowStatus(
+                InfoBarSeverity.Warning,
+                "Password required",
+                $"Enter a password containing at least {BundlePackConstants.MinimumPasswordCharacters} characters.");
             return;
         }
 

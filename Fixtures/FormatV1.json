@@ -1,0 +1,25 @@
+{
+  "formatIdentifier": "com.tuki0918.bundlepack",
+  "manifestVersion": 1,
+  "minimumPasswordCharacters": 12,
+  "container": {
+    "magic": "BPKENC01",
+    "version": 1,
+    "flags": 1,
+    "fixedHeaderSize": 92,
+    "pbkdf2Iterations": 600000,
+    "plaintextChunkSize": 4194304
+  },
+  "limits": {
+    "maximumAcceptedEntries": 9999,
+    "maximumExpandedBytes": 21474836480,
+    "maximumMetadataBytes": 16777216,
+    "maximumInputFileBytes": 4294967294
+  },
+  "displayMetadataBytes": {
+    "title": 256,
+    "packageVersion": 64,
+    "author": 256,
+    "summary": 4096
+  }
+}

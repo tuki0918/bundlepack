@@ -1,9 +1,12 @@
+using BundlePack.Core;
+
 namespace BundlePack.Windows;
 
 internal static class FileHelpersForUi
 {
     public static bool HasMinimumPasswordLength(string password) =>
-        new System.Globalization.StringInfo(password.Normalize(System.Text.NormalizationForm.FormC)).LengthInTextElements >= 12;
+        new System.Globalization.StringInfo(password.Normalize(System.Text.NormalizationForm.FormC)).LengthInTextElements
+            >= BundlePackConstants.MinimumPasswordCharacters;
 
     public static string SafeFileName(string value)
     {
