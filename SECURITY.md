@@ -13,9 +13,11 @@ If private reporting is unavailable, open a public issue containing only a reque
 ## Security boundaries
 
 - A custom package icon is public and is not encrypted.
+- Finder and Explorer thumbnail extensions read only that public icon; they do not decrypt or enumerate package contents.
 - Passwords are not persisted, and copied generated passwords are cleared from the clipboard after 60 seconds when unchanged.
 - Encrypted packages use PBKDF2-HMAC-SHA256 and chunked AES-256-GCM authentication.
 - Unencrypted packages are ZIP-compatible and provide no confidentiality.
+- Readers validate actual expanded sizes and CRCs before extraction, and extraction uses the same archive bytes that were reviewed.
 - BundlePack is not independently audited. Do not rely on experimental releases as the only copy of irreplaceable data.
 
 See [Docs/FORMAT.md](Docs/FORMAT.md) for the file-format security boundary.

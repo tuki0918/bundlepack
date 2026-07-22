@@ -1,18 +1,21 @@
 # BundlePack
 
-BundlePack is a native macOS utility for collecting files and folders into a shareable `.bundlepack` archive. Packages can be encrypted for privacy or stored as standard ZIP-compatible archives. Encryption is enabled by default.
+BundlePack is a native macOS and Windows utility for collecting files and folders into a shareable `.bundlepack` archive. Packages can be created and opened on either platform. They can be encrypted for privacy or stored as standard ZIP-compatible archives. Encryption is enabled by default.
 
 ## Highlights
 
 - Add multiple files and folders with a file picker or drag and drop.
-- Choose or drop a custom package icon displayed by Finder and the standard macOS preview.
+- Choose or drop a custom package icon stored with the package.
 - Encrypt file names, metadata, ZIP structure, and file contents with AES-256-GCM.
 - Create unencrypted `.bundlepack` files that remain compatible with standard ZIP tools.
 - Generate strong passwords with configurable length, digit count, and symbol count.
 - Open `.bundlepack` files by double-clicking, choosing a file, or dragging one into the app.
-- Run natively on both Apple silicon and Intel Macs.
+- Follow percentage progress and cancel long create, unlock, and extraction operations.
+- Display each package's public custom icon in Finder and Windows Explorer thumbnails.
+- Exchange encrypted and unencrypted packages between the native SwiftUI macOS app and native WinUI 3 Windows app.
+- Run natively on Apple silicon, Intel Macs, x64 Windows, and ARM64 Windows.
 
-## Screenshots
+## macOS Screenshots
 
 ### Initial Views
 
@@ -36,26 +39,90 @@ The Create screen accepts files, folders, and a custom package icon by drag and 
 
 ## Requirements
 
-- macOS 15 or later
-- Xcode with the macOS 15 SDK, or matching Xcode Command Line Tools
+### macOS
+
+- macOS 15 or later;
+- Xcode with the macOS 15 SDK, or matching Xcode Command Line Tools.
+
+### Windows
+
+- Windows 10 version 1809 or later;
+- Visual Studio 2026 with the Windows application development workload;
+- .NET 10 SDK.
 
 ## Build from Source
+
+### macOS
 
 Clone the repository, then run:
 
 ```sh
-chmod +x Scripts/build.sh Scripts/test.sh Scripts/generate-icons.sh
+chmod +x Scripts/*.sh
 ./Scripts/test.sh
 ./Scripts/build.sh
 ```
 
 The app is written to `.build/BundlePack.app`. You can also open `BundlePack.xcodeproj` and build the `BundlePack` scheme in Xcode.
 
+Remove generated macOS and Windows build output and Finder metadata with:
+
+```sh
+./Scripts/clean.sh
+```
+
 The command-line build uses an ad-hoc signature for local testing. Before distributing the app, sign it with an Apple Developer ID and notarize it.
 
-Pull requests and pushes are checked on macOS by GitHub Actions. The workflow runs the smoke tests, builds universal Intel and Apple Silicon executables, validates signatures and property lists, and uploads a short-lived CI artifact.
+### Windows
 
-## Release Build
+Open `Windows/BundlePack.Windows.sln` in Visual Studio and run the `BundlePack.Windows` project for `x64` or `ARM64`. From a Developer PowerShell prompt:
+
+```powershell
+dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=x64
+dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=ARM64
+dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\Tests\Compatibility
+```
+
+The Windows client is an unpackaged WinUI app. It supports file pickers, drag
+and drop, creation, unlocking, validation, and safe extraction. CI also
+builds per-user x64 and ARM64 installers that place the complete application in
+a stable location and automatically register **Open with** and Explorer
+thumbnails. PowerShell registration scripts remain available for source builds.
+
+Pull requests and pushes are checked on Windows and macOS by GitHub Actions. Windows opens macOS-generated fixtures and creates new Windows fixtures; macOS then opens those Windows-generated files. The workflow also builds the WinUI app, runs the Swift smoke tests, builds universal Intel and Apple Silicon executables, and validates the macOS app bundle.
+
+### CI Test Applications
+
+Every successful [CI workflow run](https://github.com/tuki0918/bundlepack/actions/workflows/ci.yml) provides four downloadable application artifacts for 14 days:
+
+- `BundlePack-macOS-universal-<commit>` contains a ZIP of the universal macOS app and its SHA-256 checksum;
+- `BundlePack-Windows-x64-<commit>` contains the x64 app, Explorer thumbnail provider, and optional per-user registration scripts;
+- `BundlePack-Windows-arm64-<commit>` contains the corresponding ARM64 files;
+- `BundlePack-Windows-Installers-<commit>` contains separate x64 and ARM64 Setup executables plus SHA-256 checksums. The x64 installer is installed and uninstalled by CI; ARM64 execution remains a device-level release check.
+
+Open a workflow run and use its **Artifacts** section to download a build. Choose
+`BundlePack-Setup-x64.exe` for Intel/AMD Windows or
+`BundlePack-Setup-arm64.exe` for ARM64 Windows. Setup installs for the current
+user without an administrator prompt and removes its files and registry entries
+through Windows **Installed apps**. The macOS app is ad-hoc signed and not
+notarized. The Windows builds and installers are framework-dependent and
+unsigned, and the ARM64 build is compiled but not executed by the hosted x64
+runner. These artifacts are intended only for short-lived testing and are not
+release binaries.
+
+## Releases
+
+Publishing the source repository or a source-only GitHub release does not require an Apple Developer Program membership. Commit the intended changes, push them, and wait for the complete Windows and macOS CI workflow to pass before creating the tag.
+
+Do not publish the locally built `.build/BundlePack.app` as a trusted macOS binary. The command-line build is ad-hoc signed for local use. Public macOS binaries require an active Apple Developer Program membership, a **Developer ID Application** certificate, and successful notarization. An **Apple Development** certificate or a dummy identity is not a substitute.
+
+The Windows app remains unpackaged internally, with an Inno Setup installer for
+CI testing. Before publishing a Windows binary, complete the device checks,
+bundle or document the required runtimes, and sign the executable, thumbnail
+provider, and installer with a trusted code-signing certificate.
+
+See [Docs/RELEASE.md](Docs/RELEASE.md) for the release checklist and the current source-only recommendation.
+
+### Signed macOS Binary
 
 Store notarization credentials in Keychain once:
 
@@ -73,7 +140,7 @@ NOTARYTOOL_PROFILE="BundlePack" \
 
 The notarized archive is written to `.build/release/BundlePack-<version>.zip`. Signing credentials and passwords are never read from repository files.
 
-## Finder, Quick Look, and Custom Icons
+## macOS Finder, Quick Look, and Custom Icons
 
 ### Installation
 
@@ -108,11 +175,7 @@ Each package can have its own icon:
 - BundlePack normalizes the image to a transparent 1024 × 1024 PNG and stores it as `icon.png`;
 - Finder uses the embedded icon for thumbnails, and BundlePack also applies it as the file's custom icon for compact list views.
 
-A ready-to-use gift-box icon is included for testing the feature:
-
-<img src="Docs/Images/demo-package-icon.png" width="180" alt="Gift-box demo package icon">
-
-[Open the 1024 × 1024 transparent PNG](Docs/Images/demo-package-icon.png), then select **Choose Icon…** or drop it onto the Create screen's icon preview.
+The macOS app supports PNG, JPEG, TIFF, HEIC, and SVG images. The Windows app supports PNG, JPEG, BMP, and TIFF images. Both applications preserve the source aspect ratio, center the image on a transparent canvas, and store it as a 1024 × 1024 `icon.png`.
 
 The package icon is always public, including in encrypted packages, because Finder must read it without a password. Do not use an image that contains private information.
 
@@ -126,9 +189,23 @@ If Finder continues to display an older preview or icon after replacing the app,
 qlmanage -r cache
 ```
 
+## Windows Explorer Thumbnails
+
+The Windows source includes an optional stream-based Explorer thumbnail provider
+for x64 and ARM64. It reads only the public `icon.png` representation and works
+for encrypted and unencrypted packages without a password. It does not expose
+the manifest, file names, or contents.
+
+The Windows Setup executable registers it automatically. Source builds can use
+the development registration instructions in
+[Windows/README.md](Windows/README.md). The registration remains optional; the
+Create and Open workflows work without the Shell extension.
+
 ## Package Formats
 
 The complete binary and ZIP layout is documented in [Docs/FORMAT.md](Docs/FORMAT.md).
+
+The file format is platform-neutral. Swift/CryptoKit and C#/.NET implement the same encryption and archive rules independently. Checked-in macOS fixtures and Windows-generated CI fixtures verify archive compatibility and Unicode password normalization in both directions.
 
 ### Encrypted
 
@@ -169,13 +246,15 @@ Current archive limits:
 - fewer than 10,000 entries;
 - no individual file of 4 GB or more;
 - no more than 20 GB after expansion;
+- bounded UTF-8 display metadata and package-icon inputs;
 - no ZIP64 inner archives.
 
 ## Icon Generation
 
-`Scripts/render-app-icon.swift` is the source of truth for both `AppIcon.icns` and `DefaultPackageIcon.png`.
+`Scripts/render-app-icon.swift` is the source of truth for `AppIcon.icns`, the Windows `AppIcon.ico`, and `DefaultPackageIcon.png`.
 
 - `AppIcon.icns` is the BundlePack application and document-type icon.
+- `Windows/BundlePack.Windows/Assets/AppIcon.ico` is embedded in the Windows executable.
 - `DefaultPackageIcon.png` is embedded when the user does not choose a package-specific image.
 - A custom package icon changes only that `.bundlepack` file; it does not replace the BundlePack application icon.
 
@@ -191,13 +270,27 @@ Intermediate `.iconset` files are created in the temporary directory and are not
 
 ## Project Layout
 
+See [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) for component ownership,
+compatibility gates, and the format-change checklist.
+
 ```text
 BundlePack/App/                 SwiftUI app and package workflows
+BundlePack/App/Views/           macOS screens and shared view components
 BundlePack/Shared/              container, manifest, and ZIP validation
 BundlePack/ThumbnailExtension/  Finder thumbnail provider
 Docs/                           screenshots and file-format documentation
+global.json                     repository-wide .NET 10 SDK selection
 Scripts/                        build, test, and icon generation scripts
 Tests/                          end-to-end and drag-and-drop smoke tests
+Tests/Compatibility/            checked-in macOS interoperability fixtures
+Windows/BundlePack.Core/        cross-platform C# format implementation
+Windows/BundlePack.Windows/     native WinUI 3 application
+Windows/BundlePack.Thumbnail/   Explorer thumbnail COM server
+Windows/BundlePack.Thumbnail.Tests/ Windows thumbnail rendering tests
+Windows/BundlePack.Core.Tests/  Windows creation and compatibility tests
+Windows/Installer/              x64 and ARM64 Inno Setup definitions
+Windows/Scripts/                optional per-user Windows shell integration
+Windows/Tests/                  Windows-only shell integration tests
 ```
 
 ## Product Identifiers
@@ -206,9 +299,14 @@ Tests/                          end-to-end and drag-and-drop smoke tests
 - app: `com.tuki0918.BundlePack`
 - thumbnail extension: `com.tuki0918.BundlePack.Thumbnail`
 
+The unpackaged Windows app does not currently register a package identity.
+
 ## Project Status
 
-BundlePack is an experimental project. Review the format and cryptographic implementation before relying on it for high-value or irreplaceable data.
+BundlePack is an experimental project. Windows binaries should be built and
+tested on Windows before distribution. Review the format and both cryptographic
+implementations before relying on BundlePack for high-value or irreplaceable
+data.
 
 - See [SECURITY.md](SECURITY.md) to report vulnerabilities privately.
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for development and pull-request guidance.
