@@ -1,20 +1,21 @@
 # BundlePack
 
-BundlePack is a native macOS and Windows utility for collecting files and
-folders into a shareable `.bundlepack` archive. Packages can be created and
-opened on either platform. They can be encrypted for privacy or stored as
-standard ZIP-compatible archives. Encryption is enabled by default.
+BundlePack is a native macOS and Windows utility for packing files and folders
+into shareable `.bundlepack` archives with custom thumbnails. Each thumbnail
+travels with its package and appears in Finder and Windows Explorer, making
+packages easy to recognize at a glance. Packages can be created and opened on
+either platform, encrypted for privacy (the default), or stored as standard
+ZIP-compatible archives.
 
 ## Highlights
 
+- Give each package a custom thumbnail that appears in Finder and Windows Explorer.
 - Add multiple files and folders with a file picker or drag and drop.
-- Choose or drop a custom package icon stored with the package.
 - Encrypt file names, metadata, ZIP structure, and file contents with AES-256-GCM.
 - Create unencrypted `.bundlepack` files that remain compatible with standard ZIP tools.
 - Generate strong passwords with configurable length, digit count, and symbol count.
 - Open `.bundlepack` files by double-clicking, choosing a file, or dragging one into the app.
 - Follow percentage progress and cancel long create, unlock, and extraction operations.
-- Display each package's public custom icon in Finder and Windows Explorer thumbnails.
 - Exchange packages between the native SwiftUI macOS app and native WinUI 3 Windows app.
 - Run natively on Apple silicon, Intel Macs, x64 Windows, and ARM64 Windows.
 
