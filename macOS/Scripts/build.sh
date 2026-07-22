@@ -1,12 +1,13 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT="${0:A:h:h}"
-BUILD_ROOT="${BUNDLEPACK_BUILD_DIR:-$ROOT/.build}"
+MACOS_ROOT="${0:A:h:h}"
+REPOSITORY_ROOT="${MACOS_ROOT:h}"
+BUILD_ROOT="${BUNDLEPACK_BUILD_DIR:-$REPOSITORY_ROOT/.build}"
 APP="$BUILD_ROOT/BundlePack.app"
 INTERMEDIATES="$BUILD_ROOT/intermediates"
 
-source "$ROOT/Scripts/swift-sources.sh"
+source "$MACOS_ROOT/Scripts/swift-sources.sh"
 rm -rf "$APP" "$INTERMEDIATES"
 mkdir -p \
   "$APP/Contents/MacOS" \
@@ -59,18 +60,18 @@ lipo -create \
   "$INTERMEDIATES/BundlePackThumbnail-arm64" \
   "$INTERMEDIATES/BundlePackThumbnail-x86_64" \
   -output "$APP/Contents/PlugIns/BundlePackThumbnail.appex/Contents/MacOS/BundlePackThumbnail"
-cp "$ROOT/BundlePack/App/Info.plist" "$APP/Contents/Info.plist"
-cp "$ROOT/BundlePack/ThumbnailExtension/Info.plist" \
+cp "$MACOS_ROOT/BundlePack/App/Info.plist" "$APP/Contents/Info.plist"
+cp "$MACOS_ROOT/BundlePack/ThumbnailExtension/Info.plist" \
   "$APP/Contents/PlugIns/BundlePackThumbnail.appex/Contents/Info.plist"
-cp "$ROOT/BundlePack/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
-cp "$ROOT/BundlePack/Resources/DefaultPackageIcon.png" "$APP/Contents/Resources/DefaultPackageIcon.png"
+cp "$MACOS_ROOT/BundlePack/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
+cp "$MACOS_ROOT/BundlePack/Resources/DefaultPackageIcon.png" "$APP/Contents/Resources/DefaultPackageIcon.png"
 
 chmod +x \
   "$APP/Contents/MacOS/BundlePack" \
   "$APP/Contents/PlugIns/BundlePackThumbnail.appex/Contents/MacOS/BundlePackThumbnail"
 
 codesign --force --options runtime --sign - \
-  --entitlements "$ROOT/BundlePack/ThumbnailExtension/BundlePackThumbnail.entitlements" \
+  --entitlements "$MACOS_ROOT/BundlePack/ThumbnailExtension/BundlePackThumbnail.entitlements" \
   "$APP/Contents/PlugIns/BundlePackThumbnail.appex"
 codesign --force --options runtime --sign - "$APP"
 codesign --verify --deep --strict "$APP"

@@ -1,12 +1,13 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT="${0:A:h:h}"
-APP_ICON_RENDERER="$ROOT/Scripts/render-app-icon.swift"
-ICNS_BUILDER="$ROOT/Scripts/create-icns.swift"
+MACOS_ROOT="${0:A:h:h}"
+REPOSITORY_ROOT="${MACOS_ROOT:h}"
+APP_ICON_RENDERER="$MACOS_ROOT/Scripts/render-app-icon.swift"
+ICNS_BUILDER="$MACOS_ROOT/Scripts/create-icns.swift"
 CACHE="$(mktemp -d "${TMPDIR:-/tmp}/BundlePackIconModuleCache.XXXXXX")"
 ICONSET="$CACHE/AppIcon.iconset"
-WINDOWS_ASSETS="$ROOT/Windows/BundlePack.Windows/Assets"
+WINDOWS_ASSETS="$REPOSITORY_ROOT/Windows/BundlePack.Windows/Assets"
 trap 'rm -rf "$CACHE"' EXIT
 
 mkdir -p "$ICONSET"
@@ -30,11 +31,14 @@ render_app_icon_png "$ICONSET/icon_512x512@2x.png" 1024
 xcrun swift -module-cache-path "$CACHE" \
   "$ICNS_BUILDER" \
   "$ICONSET" \
-  "$ROOT/BundlePack/Resources/AppIcon.icns"
-render_app_icon_png "$ROOT/BundlePack/Resources/DefaultPackageIcon.png" 1024
+  "$MACOS_ROOT/BundlePack/Resources/AppIcon.icns"
+render_app_icon_png "$MACOS_ROOT/BundlePack/Resources/DefaultPackageIcon.png" 1024
 mkdir -p "$WINDOWS_ASSETS"
+cp \
+  "$MACOS_ROOT/BundlePack/Resources/DefaultPackageIcon.png" \
+  "$WINDOWS_ASSETS/DefaultPackageIcon.png"
 sips -z 256 256 \
-  "$ROOT/BundlePack/Resources/DefaultPackageIcon.png" \
+  "$MACOS_ROOT/BundlePack/Resources/DefaultPackageIcon.png" \
   --out "$CACHE/AppIcon-256.png" >/dev/null
 sips -s format ico \
   "$CACHE/AppIcon-256.png" \

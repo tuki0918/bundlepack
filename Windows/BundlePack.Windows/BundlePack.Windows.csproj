@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="../../BundlePack/Resources/DefaultPackageIcon.png" Link="Assets/DefaultPackageIcon.png">
+    <Content Include="Assets/DefaultPackageIcon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

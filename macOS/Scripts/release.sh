@@ -1,21 +1,22 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT="${0:A:h:h}"
-APP="$ROOT/.build/BundlePack.app"
-RELEASE_ROOT="$ROOT/.build/release"
-VERSION="$(plutil -extract CFBundleShortVersionString raw "$ROOT/BundlePack/App/Info.plist")"
+MACOS_ROOT="${0:A:h:h}"
+REPOSITORY_ROOT="${MACOS_ROOT:h}"
+APP="$REPOSITORY_ROOT/.build/BundlePack.app"
+RELEASE_ROOT="$REPOSITORY_ROOT/.build/release"
+VERSION="$(plutil -extract CFBundleShortVersionString raw "$MACOS_ROOT/BundlePack/App/Info.plist")"
 ARCHIVE="$RELEASE_ROOT/BundlePack-$VERSION.zip"
 
 : "${APPLE_SIGNING_IDENTITY:?Set APPLE_SIGNING_IDENTITY to a Developer ID Application identity}"
 : "${NOTARYTOOL_PROFILE:?Set NOTARYTOOL_PROFILE to an xcrun notarytool Keychain profile}"
 
-"$ROOT/Scripts/test.sh"
-BUNDLEPACK_BUILD_DIR="$ROOT/.build" "$ROOT/Scripts/build.sh"
+"$MACOS_ROOT/Scripts/test.sh"
+BUNDLEPACK_BUILD_DIR="$REPOSITORY_ROOT/.build" "$MACOS_ROOT/Scripts/build.sh"
 
 codesign --force --timestamp --options runtime \
   --sign "$APPLE_SIGNING_IDENTITY" \
-  --entitlements "$ROOT/BundlePack/ThumbnailExtension/BundlePackThumbnail.entitlements" \
+  --entitlements "$MACOS_ROOT/BundlePack/ThumbnailExtension/BundlePackThumbnail.entitlements" \
   "$APP/Contents/PlugIns/BundlePackThumbnail.appex"
 codesign --force --timestamp --options runtime \
   --sign "$APPLE_SIGNING_IDENTITY" \

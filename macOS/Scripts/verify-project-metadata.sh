@@ -1,12 +1,13 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT="${0:A:h:h}"
-APP_INFO="$ROOT/BundlePack/App/Info.plist"
-THUMBNAIL_INFO="$ROOT/BundlePack/ThumbnailExtension/Info.plist"
-WINDOWS_PROPS="$ROOT/Windows/Directory.Build.props"
-XCODE_PROJECT="$ROOT/BundlePack.xcodeproj/project.pbxproj"
-source "$ROOT/Scripts/swift-sources.sh"
+MACOS_ROOT="${0:A:h:h}"
+REPOSITORY_ROOT="${MACOS_ROOT:h}"
+APP_INFO="$MACOS_ROOT/BundlePack/App/Info.plist"
+THUMBNAIL_INFO="$MACOS_ROOT/BundlePack/ThumbnailExtension/Info.plist"
+WINDOWS_PROPS="$REPOSITORY_ROOT/Windows/Directory.Build.props"
+XCODE_PROJECT="$MACOS_ROOT/BundlePack.xcodeproj/project.pbxproj"
+source "$MACOS_ROOT/Scripts/swift-sources.sh"
 
 fail() {
   print -u2 -- "Project metadata mismatch: $1"
@@ -42,24 +43,24 @@ thumbnail_identifier="$(plutil -extract CFBundleIdentifier raw "$THUMBNAIL_INFO"
   || fail "unexpected thumbnail extension identifier: $thumbnail_identifier"
 
 for source in "${BUNDLEPACK_APP_SOURCES[@]}" "${BUNDLEPACK_THUMBNAIL_SOURCES[@]}"; do
-  [[ -f "$source" ]] || fail "configured Swift source does not exist: ${source#$ROOT/}"
+  [[ -f "$source" ]] || fail "configured Swift source does not exist: ${source#$REPOSITORY_ROOT/}"
 done
 
-for source in "$ROOT"/BundlePack/App/**/*.swift(N) "$ROOT"/BundlePack/Shared/*.swift(N); do
+for source in "$MACOS_ROOT"/BundlePack/App/**/*.swift(N) "$MACOS_ROOT"/BundlePack/Shared/*.swift(N); do
   (( ${BUNDLEPACK_APP_SOURCES[(Ie)$source]} )) \
-    || fail "macOS app source is not registered: ${source#$ROOT/}"
+    || fail "macOS app source is not registered: ${source#$REPOSITORY_ROOT/}"
 done
 
-for source in "$ROOT"/BundlePack/ThumbnailExtension/*.swift(N); do
+for source in "$MACOS_ROOT"/BundlePack/ThumbnailExtension/*.swift(N); do
   (( ${BUNDLEPACK_THUMBNAIL_SOURCES[(Ie)$source]} )) \
-    || fail "thumbnail source is not registered: ${source#$ROOT/}"
+    || fail "thumbnail source is not registered: ${source#$REPOSITORY_ROOT/}"
 done
 
 xcode_project_contents="$(<"$XCODE_PROJECT")"
 for source in "${BUNDLEPACK_APP_SOURCES[@]}" "${BUNDLEPACK_THUMBNAIL_SOURCES[@]}"; do
   file_name="${source:t}"
   [[ "$xcode_project_contents" == *"path = $file_name;"* ]] \
-    || fail "macOS source is missing from Xcode: ${source#$ROOT/}"
+    || fail "macOS source is missing from Xcode: ${source#$REPOSITORY_ROOT/}"
 done
 
 print -- "PASS: project metadata and Swift source registrations are synchronized"

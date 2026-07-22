@@ -49,7 +49,11 @@ The format is platform-neutral. The native macOS implementation uses Swift, Cryp
 - store `icon.png` and `manifest.json` without ZIP compression;
 - apply the same path, entry-count, size, ZIP64, compression, and symbolic-link restrictions.
 
-`Tests/Compatibility` contains packages created by macOS and opened by Windows tests. Windows CI creates a second fixture set that is downloaded and opened by the macOS test job. Dedicated Unicode-password fixtures use opposite composed/decomposed forms to verify NFC normalization in both directions. The shared fixture passwords are test-only and documented beside the fixtures.
+`macOS/Tests/Compatibility` contains packages created by macOS and opened by
+Windows tests. Windows CI creates a second fixture set that is downloaded and
+opened by the macOS test job. Dedicated Unicode-password fixtures use opposite
+composed/decomposed forms to verify NFC normalization in both directions. The
+shared fixture passwords are test-only and documented beside the fixtures.
 
 ## Unencrypted packages
 

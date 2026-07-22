@@ -12,18 +12,18 @@ Windows WinUI app ─┘
 
 ## Source ownership
 
-- `BundlePack/App` contains macOS UI state and create/open workflows. Package
+- `macOS/BundlePack/App` contains macOS UI state and create/open workflows. Package
   orchestration is separated from input validation, image normalization, ZIP
   commands, and destination naming helpers. File pickers, drag and drop, and
   Finder icon integration are separated from package workflow state transitions.
-- `BundlePack/App/Views` contains the SwiftUI shell, Create and Open screens,
+- `macOS/BundlePack/App/Views` contains the SwiftUI shell, Create and Open screens,
   password-generator sheet, and shared visual components.
-- `BundlePack/Shared` contains the Swift archive, manifest, and encrypted-container implementation.
+- `macOS/BundlePack/Shared` contains the Swift archive, manifest, and encrypted-container implementation.
   ZIP inspection orchestration is separated from low-level entry, path, DEFLATE,
   and CRC validation.
   Encrypted-container operations are separated from binary-header parsing,
   PBKDF2 key derivation, and nonce construction.
-- `BundlePack/ThumbnailExtension` contains the optional Finder thumbnail provider.
+- `macOS/BundlePack/ThumbnailExtension` contains the optional Finder thumbnail provider.
 - `Windows/BundlePack.Core` contains the UI-independent C# format implementation.
   Archive orchestration, validation, and ZIP writing are kept in focused partial
   class files so the format checks can evolve without growing one monolithic source.
@@ -37,17 +37,15 @@ Windows WinUI app ─┘
 - `Windows/Installer` contains per-user x64 and ARM64 Inno Setup definitions.
 - `Windows/Scripts` contains optional per-user Windows shell registration tools.
 - `Windows/Tests` contains Windows-only shell and installer integration checks.
-- `Tests/Compatibility` contains macOS-created fixtures consumed by C# tests.
+- `macOS/Tests/Compatibility` contains macOS-created fixtures consumed by C# tests.
 - `Docs/FORMAT.md` is the normative cross-platform format contract.
 - `global.json` pins Windows command-line builds to the .NET 10 SDK family.
-- `Scripts/swift-sources.sh` is the source of truth for Swift command-line
+- `macOS/Scripts/swift-sources.sh` is the source of truth for Swift command-line
   builds and is validated against the Xcode project during tests.
 
-The macOS project remains at the repository root because its Xcode project,
-build scripts, extension embedding, and code-signing paths all refer to that
-layout. Moving it under another platform directory would add churn without
-improving format isolation; the Windows implementation is grouped separately
-because it consists of multiple Visual Studio projects.
+The repository root treats `macOS` and `Windows` as peer platform boundaries.
+Each directory owns its native source, projects, scripts, tests, and platform
+guide. Shared contracts and repository-wide documentation remain in `Docs`.
 
 ## Compatibility gates
 

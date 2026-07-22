@@ -37,7 +37,7 @@ All notable changes to BundlePack are documented in this file.
 - Unencrypted packages are staged in the destination directory before replacement, including when saving to another volume.
 - GitHub Actions dependencies are pinned to immutable revisions and monitored by Dependabot.
 - CI macOS builds are verification-only; public binary distribution uses the separate signed and notarized release workflow.
-- The macOS SwiftUI screens are separated into focused files under `BundlePack/App/Views`.
+- The macOS SwiftUI screens are separated into focused files under `macOS/BundlePack/App/Views`.
 - Swift source lists are centralized and checked against the filesystem and Xcode project during tests.
 - The Windows archive implementation is separated into orchestration, validation, and ZIP-writing source files.
 - Windows encrypted-container operations are separated from binary-header parsing and key-derivation helpers.

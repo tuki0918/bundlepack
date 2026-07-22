@@ -13,11 +13,16 @@ var repositoryRoot = options.TryGetValue("repo", out var explicitRoot)
     : FindRepositoryRoot(Environment.CurrentDirectory);
 var fixturesDirectory = options.TryGetValue("fixtures", out var explicitFixtures)
     ? Path.GetFullPath(explicitFixtures)
-    : Path.Combine(repositoryRoot, "Tests", "Compatibility");
+    : Path.Combine(repositoryRoot, "macOS", "Tests", "Compatibility");
 var outputDirectory = options.TryGetValue("output", out var explicitOutput)
     ? Path.GetFullPath(explicitOutput)
     : null;
-var defaultIconPath = Path.Combine(repositoryRoot, "BundlePack", "Resources", "DefaultPackageIcon.png");
+var defaultIconPath = Path.Combine(
+    repositoryRoot,
+    "Windows",
+    "BundlePack.Windows",
+    "Assets",
+    "DefaultPackageIcon.png");
 
 var temporaryRoot = Path.Combine(Path.GetTempPath(), $"BundlePack-Windows-Tests-{Guid.NewGuid():N}");
 Directory.CreateDirectory(temporaryRoot);

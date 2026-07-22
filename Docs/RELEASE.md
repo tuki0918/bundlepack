@@ -15,7 +15,7 @@ unsigned development builds, not approved release assets.
 ## Source-only release
 
 1. Confirm the version and release notes in `CHANGELOG.md`.
-2. Run `./Scripts/test.sh` and `./Scripts/build.sh` on macOS.
+2. Run `./macOS/Scripts/test.sh` and `./macOS/Scripts/build.sh` on macOS.
 3. Commit and push the intended files without signing credentials or generated build output.
 4. Wait for every job in `.github/workflows/ci.yml` to pass.
 5. Create the Git tag and GitHub release without binary attachments. GitHub provides source-code ZIP and tar archives automatically.
@@ -27,7 +27,7 @@ Public distribution requires all of the following:
 - active Apple Developer Program membership;
 - a valid **Developer ID Application** identity in the signing keychain;
 - successful hardened-runtime signing, notarization, stapling, and Gatekeeper assessment;
-- a clean result from `./Scripts/release.sh`.
+- a clean result from `./macOS/Scripts/release.sh`.
 
 An **Apple Development** certificate, ad-hoc signature, dummy identity, or a
 renamed local `.app` is not sufficient for a trusted public release. The

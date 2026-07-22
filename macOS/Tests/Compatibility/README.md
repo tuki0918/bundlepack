@@ -13,7 +13,7 @@ The password and payload are intentionally public test data. Never copy producti
 Regenerate the macOS fixtures after an intentional format change:
 
 ```sh
-./Scripts/generate-compatibility-fixtures.sh
+./macOS/Scripts/generate-compatibility-fixtures.sh
 ```
 
 Windows CI creates the matching `windows-*.bundlepack` files, including a

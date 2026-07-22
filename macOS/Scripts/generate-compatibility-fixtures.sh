@@ -1,11 +1,12 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT="${0:A:h:h}"
-source "$ROOT/Scripts/swift-sources.sh"
-BUILD_ROOT="$ROOT/.build/compatibility-fixtures"
+MACOS_ROOT="${0:A:h:h}"
+REPOSITORY_ROOT="${MACOS_ROOT:h}"
+source "$MACOS_ROOT/Scripts/swift-sources.sh"
+BUILD_ROOT="$REPOSITORY_ROOT/.build/compatibility-fixtures"
 CACHE="$BUILD_ROOT/module-cache"
-OUTPUT="$ROOT/Tests/Compatibility"
+OUTPUT="$MACOS_ROOT/Tests/Compatibility"
 
 rm -rf "$BUILD_ROOT"
 mkdir -p "$CACHE" "$OUTPUT"
@@ -16,7 +17,7 @@ xcrun swiftc \
   -O \
   -parse-as-library \
   -o "$BUILD_ROOT/generator" \
-  "$ROOT/Scripts/GenerateCompatibilityFixtures.swift" \
+  "$MACOS_ROOT/Scripts/GenerateCompatibilityFixtures.swift" \
   "${BUNDLEPACK_CORE_SOURCES[@]}" \
   -framework AppKit \
   -framework CryptoKit \

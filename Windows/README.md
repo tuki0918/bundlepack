@@ -2,6 +2,9 @@
 
 This directory contains the native Windows implementation of BundlePack.
 
+Return to the [project overview](../README.md), or read the shared
+[file-format specification](../Docs/FORMAT.md).
+
 ## Projects
 
 - `BundlePack.Core` implements the shared `.bundlepack` format, encryption, ZIP validation, creation, and extraction. It does not depend on WinUI and can be tested on any platform with .NET 10.
@@ -33,7 +36,7 @@ From a Developer PowerShell prompt:
 ```powershell
 dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=x64
 dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=ARM64
-dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\Tests\Compatibility
+dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\macOS\Tests\Compatibility
 ```
 
 The WinUI project is currently unpackaged. It creates new archives and supports
@@ -93,6 +96,27 @@ directories:
 CI compiles both architectures on `windows-2022`, installs and uninstalls the
 x64 Setup executable, and verifies its files and registry cleanup. ARM64 Setup
 execution is covered by the manual device checklist below.
+
+## Explorer Thumbnails
+
+The optional stream-based Explorer thumbnail provider is available for x64 and
+ARM64. It reads only the public `icon.png` representation and works for
+encrypted and unencrypted packages without a password. It does not expose the
+manifest, file names, or contents.
+
+The Setup executable registers the provider automatically. Source builds can
+use the development registration steps below. The Create and Open workflows do
+not require the Shell extension.
+
+## Custom Package Icons
+
+The Windows app supports PNG, JPEG, BMP, and TIFF source images. It preserves
+the source aspect ratio, centers the image on a transparent canvas, and stores
+it as a 1024 × 1024 `icon.png`.
+
+The package icon is always public, including in encrypted packages, because
+Explorer must read it without a password. Do not use an image that contains
+private information.
 
 ## Optional file association for development builds
 

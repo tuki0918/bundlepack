@@ -50,7 +50,7 @@ jobs:
         run: |
           dotnet restore .\Windows\BundlePack.Windows.sln -p:NuGetAudit=true -p:NuGetAuditMode=all -p:Platform=x64
           dotnet build .\Windows\BundlePack.Core.Tests\BundlePack.Core.Tests.csproj -c Release
-          dotnet run --project .\Windows\BundlePack.Core.Tests\BundlePack.Core.Tests.csproj -c Release --no-build -- --repo . --fixtures .\Tests\Compatibility --output .\.build\windows-fixtures
+          dotnet run --project .\Windows\BundlePack.Core.Tests\BundlePack.Core.Tests.csproj -c Release --no-build -- --repo . --fixtures .\macOS\Tests\Compatibility --output .\.build\windows-fixtures
 
       - name: Build WinUI app (x64)
         shell: pwsh
@@ -65,7 +65,7 @@ jobs:
             -p:Platform=x64 `
             -- `
             --fixtures .\.build\windows-fixtures `
-            --fixtures .\Tests\Compatibility
+            --fixtures .\macOS\Tests\Compatibility
 
       - name: Test Windows file association
         shell: pwsh
@@ -190,12 +190,12 @@ jobs:
           path: .build/windows-fixtures
 
       - name: Run smoke tests
-        run: ./Scripts/test.sh
+        run: ./macOS/Scripts/test.sh
         env:
           BUNDLEPACK_WINDOWS_FIXTURES: .build/windows-fixtures
 
       - name: Build universal app
-        run: ./Scripts/build.sh
+        run: ./macOS/Scripts/build.sh
 
       - name: Verify app bundle
         run: |
