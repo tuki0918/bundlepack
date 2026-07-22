@@ -34,11 +34,17 @@ Run the scripts from the repository root:
 chmod +x macOS/Scripts/*.sh
 ./macOS/Scripts/test.sh
 ./macOS/Scripts/build.sh
+./macOS/Scripts/verify-app.sh
 ```
 
 The universal Apple silicon and Intel app is written to
 `.build/BundlePack.app`. You can also open
 `macOS/BundlePack.xcodeproj` and build the `BundlePack` scheme in Xcode.
+Create the same ZIP and SHA-256 files used by CI with:
+
+```sh
+./macOS/Scripts/package-artifact.sh
+```
 
 Remove generated macOS and Windows build output and Finder metadata with:
 
@@ -57,8 +63,9 @@ build and verify the app without retaining a downloadable macOS artifact.
 
 A matching `v<version>` tag attaches a versioned ZIP and its SHA-256 checksum
 to an automatically created GitHub prerelease. Release Assets remain available
-until the release is deleted. The automated app is ad-hoc signed and not
-notarized, so it remains a testing build even when attached to a prerelease.
+until the release is deleted, and the ZIP receives a GitHub build-provenance
+attestation. The automated app is ad-hoc signed and not notarized, so it remains
+a testing build even when attached to a prerelease.
 
 ## Signed Binary
 

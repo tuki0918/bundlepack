@@ -10,6 +10,11 @@ and Windows installer artifacts for seven days. A `v<version>` tag creates a
 GitHub prerelease whose versioned application and installer assets remain
 available until the release is deleted.
 
+The tag must point to a commit reachable from the repository's default branch.
+Before publication, the Release workflow reruns both native test suites, opens
+its Windows-generated compatibility fixtures on macOS, and creates provenance
+attestations for every application archive and installer.
+
 The automated macOS application is ad-hoc signed and not notarized. Automated
 Windows applications and installers are unsigned. Keep these releases marked as
 prereleases and describe their assets as testing builds, not trusted end-user
@@ -31,12 +36,23 @@ binaries.
    git push origin v0.1.0
    ```
 
-7. Wait for the Release workflow to test both native implementations, build all
-   assets, verify the tag version, and create the GitHub prerelease.
+7. Wait for the Release workflow to confirm that the tagged commit belongs to
+   the default branch, test both native implementations, open the generated
+   Windows fixtures on macOS, attest the assets, and create the GitHub
+   prerelease.
 
 The workflow attaches versioned macOS and Windows application archives, x64 and
 ARM64 Windows installers, and SHA-256 checksum files. Rerunning the publish job
 replaces assets with the same names on the existing prerelease.
+
+After downloading a ZIP or EXE, verify its GitHub Actions provenance with:
+
+```sh
+gh attestation verify <downloaded-asset> -R tuki0918/bundlepack
+```
+
+An attestation links an asset to its repository, workflow, commit, and build
+event. It does not replace Developer ID, notarization, or Authenticode signing.
 
 ## macOS binary release
 

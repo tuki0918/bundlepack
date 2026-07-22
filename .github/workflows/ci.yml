@@ -165,32 +165,11 @@ jobs:
         run: ./macOS/Scripts/build.sh
 
       - name: Verify app bundle
-        run: |
-          for binary in \
-            .build/BundlePack.app/Contents/MacOS/BundlePack \
-            .build/BundlePack.app/Contents/PlugIns/BundlePackThumbnail.appex/Contents/MacOS/BundlePackThumbnail
-          do
-            architectures="$(lipo -archs "$binary")"
-            test "$architectures" = "x86_64 arm64" || test "$architectures" = "arm64 x86_64"
-          done
-          codesign --verify --deep --strict .build/BundlePack.app
-          plutil -lint \
-            .build/BundlePack.app/Contents/Info.plist \
-            .build/BundlePack.app/Contents/PlugIns/BundlePackThumbnail.appex/Contents/Info.plist
+        run: ./macOS/Scripts/verify-app.sh
 
       - name: Package macOS CI application
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          mkdir -p .build/artifacts
-          ditto \
-            -c -k --sequesterRsrc --keepParent \
-            .build/BundlePack.app \
-            .build/artifacts/BundlePack-macOS-universal.zip
-          unzip -tq .build/artifacts/BundlePack-macOS-universal.zip
-          cd .build/artifacts
-          shasum -a 256 \
-            BundlePack-macOS-universal.zip \
-            > BundlePack-macOS-universal.zip.sha256
+        run: ./macOS/Scripts/package-artifact.sh
 
       - name: Upload macOS universal application
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

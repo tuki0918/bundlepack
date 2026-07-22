@@ -13,7 +13,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate-release-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Require release commit on the default branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch --no-tags origin \
+            "refs/heads/$DEFAULT_BRANCH:refs/remotes/origin/$DEFAULT_BRANCH"
+          git merge-base --is-ancestor "$GITHUB_SHA" "origin/$DEFAULT_BRANCH" || {
+            echo "Tag $GITHUB_REF_NAME does not point to a commit on $DEFAULT_BRANCH." >&2
+            exit 1
+          }
+
   windows-release:
+    needs: validate-release-source
     runs-on: windows-2022
     timeout-minutes: 45
 
@@ -62,40 +84,28 @@ jobs:
         shell: pwsh
         run: |
           $version = $env:GITHUB_REF_NAME.Substring(1)
-          $releaseRoot = Join-Path $PWD ".build\release-assets"
-          New-Item -ItemType Directory -Path $releaseRoot -Force | Out-Null
-
-          foreach ($architecture in @("x64", "arm64")) {
-            $sourceDirectory = Join-Path $PWD ".build\artifacts\BundlePack-Windows-$architecture"
-            $archiveName = "BundlePack-Windows-$architecture-$version.zip"
-            $archivePath = Join-Path $releaseRoot $archiveName
-            Compress-Archive `
-              -LiteralPath $sourceDirectory `
-              -DestinationPath $archivePath `
-              -CompressionLevel Optimal
-            $hash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
-            "$hash  $archiveName" | Set-Content -LiteralPath "$archivePath.sha256" -Encoding ascii
-          }
-
-          foreach ($architecture in @("x64", "arm64")) {
-            $sourcePath = Join-Path $PWD ".build\installers\BundlePack-Setup-$architecture.exe"
-            $assetName = "BundlePack-Setup-$architecture-$version.exe"
-            $assetPath = Join-Path $releaseRoot $assetName
-            Copy-Item -LiteralPath $sourcePath -Destination $assetPath
-            $hash = (Get-FileHash -LiteralPath $assetPath -Algorithm SHA256).Hash.ToLowerInvariant()
-            "$hash  $assetName" | Set-Content -LiteralPath "$assetPath.sha256" -Encoding ascii
-          }
+          .\Windows\Scripts\Package-ReleaseAssets.ps1 `
+            -Version $version
 
       - name: Upload Windows release assets for publishing
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: BundlePack-Release-Windows-${{ github.sha }}
+          name: BundlePack-Release-Assets-Windows-${{ github.sha }}
           path: .build/release-assets
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
 
+      - name: Upload Windows compatibility fixtures
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: BundlePack-Release-Fixtures-${{ github.sha }}
+          path: .build/windows-fixtures
+          if-no-files-found: error
+          retention-days: 1
+
   macos-release:
+    needs: validate-release-source
     runs-on: macos-15
     timeout-minutes: 45
 
@@ -119,58 +129,70 @@ jobs:
         run: ./macOS/Scripts/build.sh
 
       - name: Verify application bundle
-        run: |
-          for binary in \
-            .build/BundlePack.app/Contents/MacOS/BundlePack \
-            .build/BundlePack.app/Contents/PlugIns/BundlePackThumbnail.appex/Contents/MacOS/BundlePackThumbnail
-          do
-            architectures="$(lipo -archs "$binary")"
-            test "$architectures" = "x86_64 arm64" || test "$architectures" = "arm64 x86_64"
-          done
-          codesign --verify --deep --strict .build/BundlePack.app
-          plutil -lint \
-            .build/BundlePack.app/Contents/Info.plist \
-            .build/BundlePack.app/Contents/PlugIns/BundlePackThumbnail.appex/Contents/Info.plist
+        run: ./macOS/Scripts/verify-app.sh
 
       - name: Package macOS release assets
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          release_root=".build/release-assets"
-          archive_name="BundlePack-macOS-universal-$version.zip"
-          mkdir -p "$release_root"
-          ditto \
-            -c -k --sequesterRsrc --keepParent \
-            .build/BundlePack.app \
-            "$release_root/$archive_name"
-          unzip -tq "$release_root/$archive_name"
-          cd "$release_root"
-          shasum -a 256 "$archive_name" > "$archive_name.sha256"
+          BUNDLEPACK_ARTIFACT_VERSION="${GITHUB_REF_NAME#v}" \
+            ./macOS/Scripts/package-artifact.sh
+        env:
+          BUNDLEPACK_ARTIFACT_DIR: .build/release-assets
 
       - name: Upload macOS release assets for publishing
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: BundlePack-Release-macOS-${{ github.sha }}
+          name: BundlePack-Release-Assets-macOS-${{ github.sha }}
           path: .build/release-assets
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
 
+  release-compatibility:
+    needs: windows-release
+    runs-on: macos-15
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Download Windows compatibility fixtures
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: BundlePack-Release-Fixtures-${{ github.sha }}
+          path: .build/windows-fixtures
+
+      - name: Open Windows release fixtures on macOS
+        run: ./macOS/Scripts/test-compatibility.sh
+        env:
+          BUNDLEPACK_WINDOWS_FIXTURES: .build/windows-fixtures
+
   publish-release:
     needs:
       - windows-release
       - macos-release
+      - release-compatibility
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Download release assets
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
-          pattern: BundlePack-Release-*-${{ github.sha }}
+          pattern: BundlePack-Release-Assets-*-${{ github.sha }}
           path: .release-assets
           merge-multiple: true
+
+      - name: Attest release binaries and archives
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-path: |
+            .release-assets/*.zip
+            .release-assets/*.exe
 
       - name: Create or update GitHub prerelease
         env:
@@ -178,6 +200,8 @@ jobs:
           RELEASE_NOTES: |
             > [!WARNING]
             > These automated binaries are testing builds. The macOS application is ad-hoc signed and not notarized; the Windows applications and installers are unsigned.
+
+            Verify a downloaded ZIP or EXE with `gh attestation verify <asset> -R ${{ github.repository }}`.
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" .release-assets/* --clobber

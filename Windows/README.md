@@ -72,8 +72,9 @@ Run `BundlePack.Windows.exe` in place after extracting an application artifact.
 Install the matching .NET 10 and Windows App Runtime prerequisites if necessary.
 A matching `v<version>` tag attaches versioned application ZIPs, installers, and
 SHA-256 checksums to an automatically created GitHub prerelease. Those Release
-Assets remain available until the release is deleted. All automated Windows
-applications and installers are framework-dependent, unsigned testing builds.
+Assets remain available until the release is deleted and receive GitHub
+build-provenance attestations. All automated Windows applications and installers
+are framework-dependent, unsigned testing builds.
 
 ## CI Test Installers
 
@@ -112,7 +113,11 @@ directories:
 .\Windows\Scripts\Build.ps1
 .\Windows\Scripts\Package-CIArtifacts.ps1
 .\Windows\Scripts\Build-Installers.ps1
+.\Windows\Scripts\Package-ReleaseAssets.ps1
 ```
+
+The final command creates the same versioned ZIP, installer copies, and SHA-256
+files that the tag workflow publishes.
 
 CI compiles both architectures on `windows-2022`, installs and uninstalls the
 x64 Setup executable, and verifies its files and registry cleanup. ARM64 Setup

@@ -50,8 +50,12 @@ Windows WinUI app ─┘
 - `Scripts` contains repository-wide cleanup, icon generation, and metadata validation tools.
 - `Windows/Scripts/Build.ps1` and `Windows/Scripts/Test.ps1` are the standard
   Windows build and verification entry points used by contributors and CI.
+- `Windows/Scripts/Package-ReleaseAssets.ps1` creates the versioned Windows
+  application archives, installer copies, and checksums used by tag releases.
 - `macOS/Scripts/swift-sources.sh` is the source of truth for Swift command-line
   builds and is validated against the Xcode project during tests.
+- `macOS/Scripts/verify-app.sh` and `package-artifact.sh` share bundle validation
+  and artifact packaging between local builds, CI, and tag releases.
 
 The repository root treats `macOS` and `Windows` as peer platform boundaries.
 Each directory owns its native source, projects, scripts, tests, and platform
@@ -90,7 +94,9 @@ applications and compatibility fixtures expire after one day; downloadable
 testing applications from successful `main` builds expire after seven days. A
 separate `v<version>` tag workflow repeats the native release checks and copies
 versioned assets into a GitHub prerelease, where they remain until the release
-is deleted.
+is deleted. It rejects tags outside the default branch, repeats the
+Windows-to-macOS compatibility gate, and records GitHub provenance attestations
+for the published ZIP and EXE files.
 
 Format changes must update `Docs/FORMAT.md`, both native implementations, the
 fixture generators, and the bidirectional tests in the same pull request. A new
