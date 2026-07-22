@@ -1,10 +1,10 @@
 #!/bin/zsh
 set -euo pipefail
 
-MACOS_ROOT="${0:A:h:h}"
-REPOSITORY_ROOT="${MACOS_ROOT:h}"
-APP_ICON_RENDERER="$MACOS_ROOT/Scripts/render-app-icon.swift"
-ICNS_BUILDER="$MACOS_ROOT/Scripts/create-icns.swift"
+REPOSITORY_ROOT="${0:A:h:h}"
+MACOS_ROOT="$REPOSITORY_ROOT/macOS"
+APP_ICON_RENDERER="$REPOSITORY_ROOT/Scripts/IconGeneration/render-app-icon.swift"
+ICNS_BUILDER="$REPOSITORY_ROOT/Scripts/IconGeneration/create-icns.swift"
 CACHE="$(mktemp -d "${TMPDIR:-/tmp}/BundlePackIconModuleCache.XXXXXX")"
 ICONSET="$CACHE/AppIcon.iconset"
 WINDOWS_ASSETS="$REPOSITORY_ROOT/Windows/BundlePack.Windows/Assets"

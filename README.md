@@ -130,11 +130,13 @@ compatibility gates, and the format-change checklist.
 macOS/      native macOS app, Xcode project, scripts, tests, and platform guide
 Windows/    native Windows app, core library, shell integration, tests, and platform guide
 Docs/       shared architecture, file-format, release, and screenshot documentation
+Fixtures/   checked-in cross-platform compatibility packages
+Scripts/    repository-wide cleanup, icon generation, and metadata verification
 ```
 
 The platform directories intentionally mirror each other at the repository
-root. Cross-platform contracts and repository-wide documentation remain outside
-them.
+root. Cross-platform contracts, fixtures, tooling, and repository-wide
+documentation remain outside them.
 
 ## Project Status
 

@@ -44,7 +44,7 @@ enum CompatibilitySmoke {
             }
         }
 
-        print("PASS: macOS opened all macOS and Windows fixtures, including NFC-equivalent passwords")
+        print("PASS: macOS opened all supplied compatibility fixtures, including NFC-equivalent passwords")
     }
 
     private static func verifyUnencrypted(_ url: URL) throws {

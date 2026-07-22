@@ -6,7 +6,7 @@ REPOSITORY_ROOT="${MACOS_ROOT:h}"
 source "$MACOS_ROOT/Scripts/swift-sources.sh"
 BUILD_ROOT="$REPOSITORY_ROOT/.build/compatibility-fixtures"
 CACHE="$BUILD_ROOT/module-cache"
-OUTPUT="$MACOS_ROOT/Tests/Compatibility"
+OUTPUT="$REPOSITORY_ROOT/Fixtures/Compatibility/macOS"
 
 rm -rf "$BUILD_ROOT"
 mkdir -p "$CACHE" "$OUTPUT"

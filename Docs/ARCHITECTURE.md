@@ -37,29 +37,33 @@ Windows WinUI app ─┘
 - `Windows/Installer` contains per-user x64 and ARM64 Inno Setup definitions.
 - `Windows/Scripts` contains optional per-user Windows shell registration tools.
 - `Windows/Tests` contains Windows-only shell and installer integration checks.
-- `macOS/Tests/Compatibility` contains macOS-created fixtures consumed by C# tests.
+- `Fixtures/Compatibility/macOS` contains macOS-created fixtures consumed by C# tests.
 - `Docs/FORMAT.md` is the normative cross-platform format contract.
 - `global.json` pins Windows command-line builds to the .NET 10 SDK family.
+- `Scripts` contains repository-wide cleanup, icon generation, and metadata validation tools.
 - `macOS/Scripts/swift-sources.sh` is the source of truth for Swift command-line
   builds and is validated against the Xcode project during tests.
 
 The repository root treats `macOS` and `Windows` as peer platform boundaries.
 Each directory owns its native source, projects, scripts, tests, and platform
-guide. Shared contracts and repository-wide documentation remain in `Docs`.
+guide. Shared fixtures, contracts, and repository-wide tooling remain outside
+the platform directories.
 
 ## Compatibility gates
 
-The CI workflow performs the following chain:
+The macOS and Windows native test-and-build jobs run independently. A dedicated
+compatibility job runs after both succeed. Together, the jobs perform the
+following checks:
 
-1. Windows opens the checked-in macOS fixtures.
-2. Windows creates unencrypted, encrypted, and Unicode-password fixtures.
-3. macOS downloads and opens the Windows fixtures.
-4. Both native applications are built on their own operating system.
-5. Windows registers the built app for `.bundlepack`, verifies the shell values,
+1. macOS opens the checked-in macOS fixtures and builds the universal app.
+2. Windows opens the checked-in macOS fixtures and creates unencrypted,
+   encrypted, and Unicode-password Windows fixtures.
+3. The compatibility job downloads and opens the Windows fixtures on macOS.
+4. Windows registers the built app for `.bundlepack`, verifies the shell values,
    and removes the temporary per-user registration.
-6. Windows renders macOS- and Windows-created packages through the thumbnail
+5. Windows renders macOS- and Windows-created packages through the thumbnail
    provider and builds the provider for x64 and ARM64.
-7. A separate Windows job builds x64 and ARM64 Setup executables, installs and
+6. A separate Windows job builds x64 and ARM64 Setup executables, installs and
    uninstalls x64, and verifies file-association and thumbnail registry cleanup.
 
 Each platform also creates an encrypted Unicode-password fixture and opens the

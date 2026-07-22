@@ -28,7 +28,7 @@ TestResults/
 *.xcarchive
 *.xcresult
 *.bundlepack
-!macOS/Tests/Compatibility/*.bundlepack
+!Fixtures/Compatibility/macOS/*.bundlepack
 
 # Local QA screenshots
 *-qa.png

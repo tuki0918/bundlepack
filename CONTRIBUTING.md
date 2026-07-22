@@ -28,9 +28,9 @@ Run the Windows core checks from a Developer PowerShell prompt:
 
 ```powershell
 dotnet build .\Windows\BundlePack.Core.Tests\BundlePack.Core.Tests.csproj -c Release
-dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\macOS\Tests\Compatibility --output .\.build\windows-fixtures
+dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\Fixtures\Compatibility\macOS --output .\.build\windows-fixtures
 dotnet build .\Windows\BundlePack.Windows\BundlePack.Windows.csproj -c Release -p:Platform=x64
-dotnet run --project .\Windows\BundlePack.Thumbnail.Tests -c Release -p:Platform=x64 -- --fixtures .\.build\windows-fixtures --fixtures .\macOS\Tests\Compatibility
+dotnet run --project .\Windows\BundlePack.Thumbnail.Tests -c Release -p:Platform=x64 -- --fixtures .\.build\windows-fixtures --fixtures .\Fixtures\Compatibility\macOS
 ```
 
 When changing the Windows installer, build both application architectures and
@@ -53,7 +53,7 @@ ARM64 installer execution remains a device-level release check documented in
 - Keep changes focused and written in English.
 - Add regression coverage for package-format, archive-validation, encryption, Finder, or Quick Look changes.
 - Keep `Docs/FORMAT.md`, Swift, and C# implementations synchronized when changing the file format.
-- Do not commit `.bundlepack` files outside `macOS/Tests/Compatibility`, signing certificates, provisioning profiles, passwords, or generated build output.
+- Do not commit `.bundlepack` files outside `Fixtures/Compatibility/macOS`, signing certificates, provisioning profiles, passwords, or generated build output.
 - Update `CHANGELOG.md` when behavior or the file format changes.
 
 See [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) before changing component

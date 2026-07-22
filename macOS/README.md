@@ -11,8 +11,12 @@ Return to the [project overview](../README.md), or read the shared
 - `BundlePack/Shared` contains the archive, manifest, validation, and encrypted-container implementation.
 - `BundlePack/ThumbnailExtension` contains the optional Finder thumbnail provider.
 - `BundlePack.xcodeproj` builds the app and embeds the thumbnail extension.
-- `Scripts` contains command-line build, test, release, fixture, and icon tooling.
-- `Tests` contains Swift smoke tests and macOS-generated interoperability fixtures.
+- `Scripts` contains macOS build, test, release, and fixture-generation tooling.
+- `Tests` contains the Swift smoke-test sources.
+
+Repository-wide cleanup, icon generation, and metadata verification tools live
+in [`../Scripts`](../Scripts). Checked-in interoperability packages live in
+[`../Fixtures/Compatibility/macOS`](../Fixtures/Compatibility/macOS).
 
 The macOS and Windows applications implement the same format independently and
 do not share UI code.
@@ -39,7 +43,7 @@ The universal Apple silicon and Intel app is written to
 Remove generated macOS and Windows build output and Finder metadata with:
 
 ```sh
-./macOS/Scripts/clean.sh
+./Scripts/clean.sh
 ```
 
 The command-line build uses an ad-hoc signature for local testing. Before
@@ -133,12 +137,13 @@ qlmanage -r cache
 
 ## Icon Generation
 
-`Scripts/render-app-icon.swift` is the source of truth for the macOS app icon,
-the Windows app icon, and both platform copies of `DefaultPackageIcon.png`.
-Regenerate all checked-in icon outputs from the repository root with:
+`Scripts/IconGeneration/render-app-icon.swift` is the source of truth for the
+macOS app icon, the Windows app icon, and both platform copies of
+`DefaultPackageIcon.png`. Regenerate all checked-in icon outputs from the
+repository root with:
 
 ```sh
-./macOS/Scripts/generate-icons.sh
+./Scripts/generate-icons.sh
 ```
 
 Intermediate `.iconset` files are created in the temporary directory and are

@@ -2,8 +2,9 @@
 
 This directory contains the native Windows implementation of BundlePack.
 
-Return to the [project overview](../README.md), or read the shared
-[file-format specification](../Docs/FORMAT.md).
+Both native applications implement the shared
+[file-format specification](../Docs/FORMAT.md) independently and do not share
+UI code. Return to the [project overview](../README.md).
 
 ## Projects
 
@@ -15,8 +16,6 @@ Return to the [project overview](../README.md), or read the shared
 - `Installer` contains the shared and architecture-specific Inno Setup definitions.
 - `Directory.Build.props` centralizes shared compiler, version, repository, and warning settings.
 
-Both native applications use the same format documented in [`../Docs/FORMAT.md`](../Docs/FORMAT.md). They do not share UI code.
-
 ## Requirements
 
 - Windows 10 version 1809 or later;
@@ -27,7 +26,7 @@ Both native applications use the same format documented in [`../Docs/FORMAT.md`]
 The repository-level `global.json` selects .NET 10 and allows roll-forward to
 the newest installed .NET 10 feature band.
 
-## Build and run
+## Build and Run
 
 Open `BundlePack.Windows.sln` in Visual Studio, select `BundlePack.Windows`, choose `x64` or `ARM64`, and run it.
 
@@ -36,7 +35,7 @@ From a Developer PowerShell prompt:
 ```powershell
 dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=x64
 dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=ARM64
-dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\macOS\Tests\Compatibility
+dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\Fixtures\Compatibility\macOS
 ```
 
 The WinUI project is currently unpackaged. It creates new archives and supports
@@ -55,7 +54,7 @@ matching .NET 10 and Windows App Runtime prerequisites if necessary. These
 framework-dependent, unsigned artifacts are for testing only and expire after
 14 days.
 
-## CI test installers
+## CI Test Installers
 
 The `BundlePack-Windows-Installers-<commit>` artifact contains:
 
@@ -118,7 +117,7 @@ The package icon is always public, including in encrypted packages, because
 Explorer must read it without a password. Do not use an image that contains
 private information.
 
-## Optional file association for development builds
+## Optional File Association for Development Builds
 
 After building the app, add it to Windows **Open with** for the current user:
 
@@ -143,7 +142,7 @@ builds the ARM64 provider, performs registration in the runner's current-user
 registry, verifies the ProgID, icon, open command, supported type, capabilities,
 COM server, and Shell handler, then removes the registration again.
 
-## ARM64 device verification
+## ARM64 Device Verification
 
 CI compiles the WinUI app and Explorer thumbnail provider for ARM64, but the
 hosted runner does not execute ARM64 binaries. Before an ARM64 binary release,
@@ -164,5 +163,3 @@ perform this checklist on an ARM64 Windows device:
 Record the Windows version, device architecture, and result in the release
 notes. This is a manual release gate until an ARM64 Windows runner executes the
 same checks automatically.
-
-Custom package icons can be PNG, JPEG, BMP, or TIFF images. The app preserves the source aspect ratio and normalizes the image to a transparent 1024 × 1024 PNG. The default icon is shared with the macOS project.

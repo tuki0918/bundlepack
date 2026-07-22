@@ -1,12 +1,14 @@
 #!/bin/zsh
 set -euo pipefail
 
-MACOS_ROOT="${0:A:h:h}"
-REPOSITORY_ROOT="${MACOS_ROOT:h}"
+REPOSITORY_ROOT="${0:A:h:h}"
+MACOS_ROOT="$REPOSITORY_ROOT/macOS"
 APP_INFO="$MACOS_ROOT/BundlePack/App/Info.plist"
 THUMBNAIL_INFO="$MACOS_ROOT/BundlePack/ThumbnailExtension/Info.plist"
 WINDOWS_PROPS="$REPOSITORY_ROOT/Windows/Directory.Build.props"
 XCODE_PROJECT="$MACOS_ROOT/BundlePack.xcodeproj/project.pbxproj"
+MACOS_DEFAULT_ICON="$MACOS_ROOT/BundlePack/Resources/DefaultPackageIcon.png"
+WINDOWS_DEFAULT_ICON="$REPOSITORY_ROOT/Windows/BundlePack.Windows/Assets/DefaultPackageIcon.png"
 source "$MACOS_ROOT/Scripts/swift-sources.sh"
 
 fail() {
@@ -42,6 +44,9 @@ thumbnail_identifier="$(plutil -extract CFBundleIdentifier raw "$THUMBNAIL_INFO"
 [[ "$thumbnail_identifier" == "com.tuki0918.BundlePack.Thumbnail" ]] \
   || fail "unexpected thumbnail extension identifier: $thumbnail_identifier"
 
+cmp -s "$MACOS_DEFAULT_ICON" "$WINDOWS_DEFAULT_ICON" \
+  || fail "the macOS and Windows default package icons differ"
+
 for source in "${BUNDLEPACK_APP_SOURCES[@]}" "${BUNDLEPACK_THUMBNAIL_SOURCES[@]}"; do
   [[ -f "$source" ]] || fail "configured Swift source does not exist: ${source#$REPOSITORY_ROOT/}"
 done
@@ -63,4 +68,4 @@ for source in "${BUNDLEPACK_APP_SOURCES[@]}" "${BUNDLEPACK_THUMBNAIL_SOURCES[@]}
     || fail "macOS source is missing from Xcode: ${source#$REPOSITORY_ROOT/}"
 done
 
-print -- "PASS: project metadata and Swift source registrations are synchronized"
+print -- "PASS: project metadata, default icons, and Swift source registrations are synchronized"

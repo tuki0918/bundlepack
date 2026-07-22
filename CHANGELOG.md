@@ -49,6 +49,8 @@ All notable changes to BundlePack are documented in this file.
 - macOS encrypted-container operations are separated from header parsing and cryptographic helpers.
 - macOS package creation and extraction workflows are separated from filesystem and image-processing helpers.
 - macOS file-picker, drag-and-drop, and Finder-icon interactions are separated from package workflow state handling.
+- Native macOS and Windows sources and guides are organized under peer platform directories, while shared fixtures and repository tooling use neutral top-level directories.
+- Native macOS and Windows CI jobs run independently, with bidirectional interoperability enforced by a separate compatibility job.
 
 ### Security
 

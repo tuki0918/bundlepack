@@ -13,7 +13,7 @@ var repositoryRoot = options.TryGetValue("repo", out var explicitRoot)
     : FindRepositoryRoot(Environment.CurrentDirectory);
 var fixturesDirectory = options.TryGetValue("fixtures", out var explicitFixtures)
     ? Path.GetFullPath(explicitFixtures)
-    : Path.Combine(repositoryRoot, "macOS", "Tests", "Compatibility");
+    : Path.Combine(repositoryRoot, "Fixtures", "Compatibility", "macOS");
 var outputDirectory = options.TryGetValue("output", out var explicitOutput)
     ? Path.GetFullPath(explicitOutput)
     : null;

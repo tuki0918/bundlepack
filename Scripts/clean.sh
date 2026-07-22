@@ -1,8 +1,8 @@
 #!/bin/zsh
 set -euo pipefail
 
-MACOS_ROOT="${0:A:h:h}"
-REPOSITORY_ROOT="${MACOS_ROOT:h}"
+REPOSITORY_ROOT="${0:A:h:h}"
+MACOS_ROOT="$REPOSITORY_ROOT/macOS"
 
 rm -rf \
   "$REPOSITORY_ROOT/.build" \
