@@ -6,22 +6,7 @@ BUILD_ROOT="${BUNDLEPACK_BUILD_DIR:-$ROOT/.build}"
 APP="$BUILD_ROOT/BundlePack.app"
 INTERMEDIATES="$BUILD_ROOT/intermediates"
 
-APP_SOURCES=(
-  "$ROOT/BundlePack/App/BundlePackApp.swift"
-  "$ROOT/BundlePack/App/AppModel.swift"
-  "$ROOT/BundlePack/App/ContentView.swift"
-  "$ROOT/BundlePack/App/PasswordGenerator.swift"
-  "$ROOT/BundlePack/App/PackageBuilder.swift"
-  "$ROOT/BundlePack/Shared/PackageManifest.swift"
-  "$ROOT/BundlePack/Shared/ZipArchiveInspector.swift"
-  "$ROOT/BundlePack/Shared/EncryptedContainer.swift"
-)
-THUMBNAIL_SOURCES=(
-  "$ROOT/BundlePack/ThumbnailExtension/ThumbnailProvider.swift"
-  "$ROOT/BundlePack/Shared/PackageManifest.swift"
-  "$ROOT/BundlePack/Shared/ZipArchiveInspector.swift"
-  "$ROOT/BundlePack/Shared/EncryptedContainer.swift"
-)
+source "$ROOT/Scripts/swift-sources.sh"
 rm -rf "$APP" "$INTERMEDIATES"
 mkdir -p \
   "$APP/Contents/MacOS" \
@@ -41,7 +26,7 @@ for arch in arm64 x86_64; do
     -parse-as-library \
     -module-name BundlePack \
     -o "$INTERMEDIATES/BundlePack-$arch" \
-    "${APP_SOURCES[@]}" \
+    "${BUNDLEPACK_APP_SOURCES[@]}" \
     -framework AppKit \
     -framework SwiftUI \
     -framework UniformTypeIdentifiers \
@@ -58,7 +43,7 @@ for arch in arm64 x86_64; do
     -Xlinker -e \
     -Xlinker _NSExtensionMain \
     -o "$INTERMEDIATES/BundlePackThumbnail-$arch" \
-    "${THUMBNAIL_SOURCES[@]}" \
+    "${BUNDLEPACK_THUMBNAIL_SOURCES[@]}" \
     -framework AppKit \
     -framework QuickLookThumbnailing \
     -framework CryptoKit \
@@ -84,10 +69,10 @@ chmod +x \
   "$APP/Contents/MacOS/BundlePack" \
   "$APP/Contents/PlugIns/BundlePackThumbnail.appex/Contents/MacOS/BundlePackThumbnail"
 
-codesign --force --sign - \
+codesign --force --options runtime --sign - \
   --entitlements "$ROOT/BundlePack/ThumbnailExtension/BundlePackThumbnail.entitlements" \
   "$APP/Contents/PlugIns/BundlePackThumbnail.appex"
-codesign --force --sign - "$APP"
+codesign --force --options runtime --sign - "$APP"
 codesign --verify --deep --strict "$APP"
 
 echo "$APP"

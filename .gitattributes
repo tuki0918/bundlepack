@@ -1,0 +1,26 @@
+* text=auto
+
+# Keep source and project files stable across macOS and Windows checkouts.
+*.cs text eol=lf
+*.csproj text eol=lf
+*.entitlements text eol=lf
+*.iss text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.pbxproj text eol=lf
+*.plist text eol=lf
+*.props text eol=lf
+*.ps1 text eol=lf
+*.sh text eol=lf
+*.sln text eol=lf
+*.swift text eol=lf
+*.xaml text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Never apply text conversion or textual diffs to packaged fixtures and icons.
+*.bundlepack binary
+*.icns binary
+*.ico binary
+*.png binary

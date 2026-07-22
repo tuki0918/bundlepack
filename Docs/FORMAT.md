@@ -12,9 +12,44 @@ manifest.json
 payload/
 ```
 
+No other root entries are permitted. The ZIP must be a complete single-disk
+archive; an optional ZIP comment is allowed, but bytes appended beyond the
+declared comment are rejected.
+
 `manifest.json` uses format identifier `com.tuki0918.bundlepack` and format version `1`. Readers reject other identifiers and versions.
 
+The manifest is UTF-8 JSON with these fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `format` | string | `com.tuki0918.bundlepack` |
+| `formatVersion` | integer | `1` |
+| `title` | string | Display and extraction-folder name |
+| `packageVersion` | string | User-provided package version |
+| `author` | string | Optional author text |
+| `summary` | string | Optional description text |
+| `createdAt` | string | ISO-8601 creation timestamp |
+| `files` | array | Objects containing a payload-relative `/`-separated `path` and byte `size` |
+
+Display fields must not contain Unicode control characters. Their maximum
+UTF-8 encoded lengths are 256 bytes for `title`, 64 bytes for
+`packageVersion`, 256 bytes for `author`, and 4,096 bytes for `summary`.
+`title` must contain at least one non-whitespace character. The other display
+fields may be empty.
+
 The icon is normalized to a transparent 1024 × 1024 PNG. It is public in both package formats.
+
+## Platform interoperability
+
+The format is platform-neutral. The native macOS implementation uses Swift, CryptoKit, and CommonCrypto. The native Windows implementation uses C# and .NET cryptography. Both implementations:
+
+- write UTF-8 ZIP paths using `/` as the separator;
+- normalize passwords to Unicode NFC before UTF-8 PBKDF2 input;
+- use the exact little-endian encrypted-container layout below;
+- store `icon.png` and `manifest.json` without ZIP compression;
+- apply the same path, entry-count, size, ZIP64, compression, and symbolic-link restrictions.
+
+`Tests/Compatibility` contains packages created by macOS and opened by Windows tests. Windows CI creates a second fixture set that is downloaded and opened by the macOS test job. Dedicated Unicode-password fixtures use opposite composed/decomposed forms to verify NFC normalization in both directions. The shared fixture passwords are test-only and documented beside the fixtures.
 
 ## Unencrypted packages
 
@@ -56,10 +91,21 @@ The public icon is authenticated by the hash in the fixed header but is intentio
 
 Readers reject:
 
-- absolute paths, traversal components, backslashes, colons, NUL bytes, and symbolic links;
+- absolute paths, traversal components, backslashes, colons, NUL bytes, symbolic links, and names that are not portable between macOS and Windows;
+- Windows-reserved device names, control characters, names ending in a space or period, and `<`, `>`, `"`, `|`, `?`, or `*` in path components;
 - duplicate or filesystem-normalized output paths;
+- manifests whose file paths or sizes do not exactly match the ZIP payload;
+- display metadata containing control characters or exceeding the UTF-8 limits above;
+- missing or invalid package icons, including PNG dimensions other than 1024 × 1024;
+- unexpected root entries, multi-disk ZIPs, incomplete central directories, and undeclared trailing data;
 - encrypted ZIP entries and unsupported compression methods;
+- entries whose actual expanded size or ZIP CRC does not match the central directory;
 - ZIP64 packages, 10,000 or more entries, and expanded data above 20 GiB;
 - malformed, truncated, oversized, unauthenticated, or unsupported encrypted containers.
+
+Before extraction, readers verify the actual expanded byte count and CRC of
+every payload entry, rather than trusting only sizes declared in ZIP headers.
+Extraction must use the same reviewed archive bytes: implementations may bind
+the review to a digest or retain a private snapshot until extraction finishes.
 
 The format is experimental. Future incompatible formats must use a new container or manifest version.

@@ -1,7 +1,5 @@
-import CommonCrypto
 import CryptoKit
 import Foundation
-import Security
 
 struct EncryptedBundlePackInfo: Sendable {
     let url: URL
@@ -46,18 +44,17 @@ enum BundlePackEncryptionError: LocalizedError {
 }
 
 enum BundlePackEncryptedContainer {
-    private static let magic = Data("BPKENC01".utf8)
-    private static let version: UInt16 = 1
-    private static let flags: UInt16 = 1
-    private static let iterations: UInt32 = 600_000
-    private static let chunkSize: UInt32 = 4 * 1_024 * 1_024
-    private static let fixedHeaderSize = 92
-    private static let saltSize = 16
-    private static let noncePrefixSize = 8
-    private static let iconHashSize = 32
-    private static let authenticationTagSize: UInt64 = 16
-    private static let maximumIconSize: UInt32 = 16 * 1_024 * 1_024
-    private static let maximumPlaintextSize: UInt64 = 20 * 1_024 * 1_024 * 1_024
+    static let magic = Data("BPKENC01".utf8)
+    static let version: UInt16 = 1
+    static let flags: UInt16 = 1
+    static let iterations: UInt32 = 600_000
+    static let chunkSize: UInt32 = 4 * 1_024 * 1_024
+    static let fixedHeaderSize = 92
+    static let saltSize = 16
+    static let noncePrefixSize = 8
+    static let authenticationTagSize: UInt64 = 16
+    static let maximumIconSize: UInt32 = 16 * 1_024 * 1_024
+    static let maximumPlaintextSize: UInt64 = 20 * 1_024 * 1_024 * 1_024
 
     static func isEncrypted(_ url: URL) -> Bool {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
@@ -79,12 +76,16 @@ enum BundlePackEncryptedContainer {
         archive archiveURL: URL,
         iconData: Data,
         password: String,
-        to destinationURL: URL
+        to destinationURL: URL,
+        progress: BundlePackProgressHandler? = nil
     ) throws -> EncryptedBundlePackInfo {
+        try Task.checkCancellation()
         guard normalizedPassword(password).count >= 12 else {
             throw BundlePackEncryptionError.passwordTooShort
         }
-        guard !iconData.isEmpty, iconData.count <= Int(maximumIconSize) else {
+        guard !iconData.isEmpty,
+              iconData.count <= Int(maximumIconSize),
+              BundlePackIconValidator.isValidPNG(iconData) else {
             throw BundlePackEncryptionError.invalidIcon
         }
 
@@ -131,8 +132,13 @@ enum BundlePackEncryptedContainer {
         do {
             try output.write(contentsOf: headerData)
             try output.write(contentsOf: iconData)
+            progress?(BundlePackOperationProgress(
+                fractionCompleted: 0,
+                message: "Encrypting package…"
+            ))
 
             for index in 0..<header.chunkCount {
+                try Task.checkCancellation()
                 let expected = plaintextLength(for: index, header: header)
                 guard let plaintext = try input.read(upToCount: expected), plaintext.count == expected else {
                     throw BundlePackEncryptionError.invalidContainer
@@ -142,6 +148,10 @@ enum BundlePackEncryptedContainer {
                 let sealed = try AES.GCM.seal(plaintext, using: key, nonce: nonce, authenticating: aad)
                 try output.write(contentsOf: sealed.ciphertext)
                 try output.write(contentsOf: sealed.tag)
+                progress?(BundlePackOperationProgress(
+                    fractionCompleted: Double(index + 1) / Double(header.chunkCount),
+                    message: "Encrypting package…"
+                ))
             }
             try output.synchronize()
             try output.close()
@@ -151,6 +161,8 @@ enum BundlePackEncryptedContainer {
                 try fileManager.removeItem(at: destinationURL)
             }
             try fileManager.moveItem(at: temporaryURL, to: destinationURL)
+        } catch is CancellationError {
+            throw CancellationError()
         } catch let error as BundlePackEncryptionError {
             throw error
         } catch {
@@ -163,8 +175,10 @@ enum BundlePackEncryptedContainer {
     static func open(
         _ encryptedURL: URL,
         password: String,
-        to archiveURL: URL
+        to archiveURL: URL,
+        progress: BundlePackProgressHandler? = nil
     ) throws {
+        try Task.checkCancellation()
         let parsed = try parseHeader(from: encryptedURL)
         let header = parsed.header
         let key = try deriveKey(password: password, salt: header.salt, iterations: header.iterations)
@@ -173,7 +187,15 @@ enum BundlePackEncryptedContainer {
         if fileManager.fileExists(atPath: archiveURL.path) {
             try fileManager.removeItem(at: archiveURL)
         }
-        fileManager.createFile(atPath: archiveURL.path, contents: nil)
+        guard fileManager.createFile(atPath: archiveURL.path, contents: nil) else {
+            throw BundlePackEncryptionError.writeFailed
+        }
+        do {
+            try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: archiveURL.path)
+        } catch {
+            try? fileManager.removeItem(at: archiveURL)
+            throw BundlePackEncryptionError.writeFailed
+        }
 
         let input = try FileHandle(forReadingFrom: encryptedURL)
         let output = try FileHandle(forWritingTo: archiveURL)
@@ -186,7 +208,12 @@ enum BundlePackEncryptedContainer {
 
         try input.seek(toOffset: UInt64(fixedHeaderSize) + UInt64(header.iconSize))
         do {
+            progress?(BundlePackOperationProgress(
+                fractionCompleted: 0,
+                message: "Decrypting package…"
+            ))
             for index in 0..<header.chunkCount {
+                try Task.checkCancellation()
                 let plaintextLength = plaintextLength(for: index, header: header)
                 guard let ciphertext = try input.read(upToCount: plaintextLength),
                       ciphertext.count == plaintextLength,
@@ -200,207 +227,19 @@ enum BundlePackEncryptedContainer {
                 let aad = authenticatedData(headerData: parsed.headerData, chunkIndex: index)
                 let plaintext = try AES.GCM.open(sealedBox, using: key, authenticating: aad)
                 try output.write(contentsOf: plaintext)
+                progress?(BundlePackOperationProgress(
+                    fractionCompleted: Double(index + 1) / Double(header.chunkCount),
+                    message: "Decrypting package…"
+                ))
             }
             try output.synchronize()
             completed = true
+        } catch is CancellationError {
+            throw CancellationError()
         } catch let error as BundlePackEncryptionError {
             throw error
         } catch {
             throw BundlePackEncryptionError.wrongPasswordOrTampered
         }
-    }
-
-    private struct Header {
-        let iterations: UInt32
-        let chunkSize: UInt32
-        let chunkCount: UInt32
-        let plaintextSize: UInt64
-        let iconSize: UInt32
-        let salt: Data
-        let noncePrefix: Data
-        let iconHash: Data
-
-        func encoded() -> Data {
-            var data = Data()
-            data.append(BundlePackEncryptedContainer.magic)
-            data.appendLittleEndian(BundlePackEncryptedContainer.version)
-            data.appendLittleEndian(BundlePackEncryptedContainer.flags)
-            data.appendLittleEndian(iterations)
-            data.appendLittleEndian(chunkSize)
-            data.appendLittleEndian(chunkCount)
-            data.appendLittleEndian(plaintextSize)
-            data.appendLittleEndian(iconSize)
-            data.append(salt)
-            data.append(noncePrefix)
-            data.append(iconHash)
-            return data
-        }
-    }
-
-    private struct ParsedHeader {
-        let header: Header
-        let headerData: Data
-        let iconData: Data
-        let fileSize: UInt64
-    }
-
-    private static func parseHeader(from url: URL) throws -> ParsedHeader {
-        let values = try url.resourceValues(forKeys: [.fileSizeKey])
-        let fileSize = UInt64(values.fileSize ?? 0)
-        guard fileSize >= UInt64(fixedHeaderSize) else {
-            throw BundlePackEncryptionError.invalidContainer
-        }
-
-        let handle = try FileHandle(forReadingFrom: url)
-        defer { try? handle.close() }
-        guard let headerData = try handle.read(upToCount: fixedHeaderSize),
-              headerData.count == fixedHeaderSize,
-              headerData.prefix(magic.count) == magic else {
-            throw BundlePackEncryptionError.invalidContainer
-        }
-
-        let parsedVersion = headerData.uint16LE(at: 8)
-        guard parsedVersion == version else { throw BundlePackEncryptionError.unsupportedVersion }
-        guard headerData.uint16LE(at: 10) == flags else {
-            throw BundlePackEncryptionError.unsupportedVersion
-        }
-
-        let parsedIterations = headerData.uint32LE(at: 12)
-        let parsedChunkSize = headerData.uint32LE(at: 16)
-        let parsedChunkCount = headerData.uint32LE(at: 20)
-        let plaintextSize = headerData.uint64LE(at: 24)
-        let iconSize = headerData.uint32LE(at: 32)
-        let salt = headerData.subdata(in: 36..<52)
-        let noncePrefix = headerData.subdata(in: 52..<60)
-        let iconHash = headerData.subdata(in: 60..<92)
-
-        guard parsedIterations >= 100_000,
-              parsedIterations <= 5_000_000,
-              parsedChunkSize >= 64 * 1_024,
-              parsedChunkSize <= 16 * 1_024 * 1_024,
-              plaintextSize > 0,
-              plaintextSize <= maximumPlaintextSize,
-              iconSize > 0,
-              iconSize <= maximumIconSize else {
-            throw BundlePackEncryptionError.invalidContainer
-        }
-
-        let expectedChunkCount = (plaintextSize + UInt64(parsedChunkSize) - 1) / UInt64(parsedChunkSize)
-        guard expectedChunkCount == UInt64(parsedChunkCount) else {
-            throw BundlePackEncryptionError.invalidContainer
-        }
-
-        let expectedFileSize = UInt64(fixedHeaderSize)
-            + UInt64(iconSize)
-            + plaintextSize
-            + UInt64(parsedChunkCount) * authenticationTagSize
-        guard fileSize == expectedFileSize else {
-            throw BundlePackEncryptionError.invalidContainer
-        }
-
-        guard let iconData = try handle.read(upToCount: Int(iconSize)),
-              iconData.count == Int(iconSize),
-              Data(SHA256.hash(data: iconData)) == iconHash else {
-            throw BundlePackEncryptionError.invalidIcon
-        }
-
-        return ParsedHeader(
-            header: Header(
-                iterations: parsedIterations,
-                chunkSize: parsedChunkSize,
-                chunkCount: parsedChunkCount,
-                plaintextSize: plaintextSize,
-                iconSize: iconSize,
-                salt: salt,
-                noncePrefix: noncePrefix,
-                iconHash: iconHash
-            ),
-            headerData: headerData,
-            iconData: iconData,
-            fileSize: fileSize
-        )
-    }
-
-    private static func deriveKey(password: String, salt: Data, iterations: UInt32) throws -> SymmetricKey {
-        let normalized = normalizedPassword(password)
-        guard normalized.count >= 12 else { throw BundlePackEncryptionError.passwordTooShort }
-
-        var keyBytes = [UInt8](repeating: 0, count: 32)
-        let status: Int32 = normalized.withCString { passwordPointer in
-            salt.withUnsafeBytes { saltBuffer in
-                CCKeyDerivationPBKDF(
-                    CCPBKDFAlgorithm(kCCPBKDF2),
-                    passwordPointer,
-                    normalized.lengthOfBytes(using: .utf8),
-                    saltBuffer.bindMemory(to: UInt8.self).baseAddress,
-                    salt.count,
-                    CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                    iterations,
-                    &keyBytes,
-                    keyBytes.count
-                )
-            }
-        }
-        guard status == kCCSuccess else { throw BundlePackEncryptionError.keyDerivationFailed }
-        defer { keyBytes.resetBytes(in: 0..<keyBytes.count) }
-        return SymmetricKey(data: keyBytes)
-    }
-
-    private static func normalizedPassword(_ password: String) -> String {
-        password.precomposedStringWithCanonicalMapping
-    }
-
-    private static func randomData(count: Int) throws -> Data {
-        var bytes = [UInt8](repeating: 0, count: count)
-        guard SecRandomCopyBytes(kSecRandomDefault, count, &bytes) == errSecSuccess else {
-            throw BundlePackEncryptionError.randomGenerationFailed
-        }
-        return Data(bytes)
-    }
-
-    private static func makeNonce(prefix: Data, index: UInt32) throws -> AES.GCM.Nonce {
-        var data = prefix
-        data.appendLittleEndian(index)
-        return try AES.GCM.Nonce(data: data)
-    }
-
-    private static func authenticatedData(headerData: Data, chunkIndex: UInt32) -> Data {
-        var data = headerData
-        data.appendLittleEndian(chunkIndex)
-        return data
-    }
-
-    private static func plaintextLength(for index: UInt32, header: Header) -> Int {
-        let consumed = UInt64(index) * UInt64(header.chunkSize)
-        return Int(min(UInt64(header.chunkSize), header.plaintextSize - consumed))
-    }
-}
-
-private extension Data {
-    mutating func appendLittleEndian<T: FixedWidthInteger>(_ value: T) {
-        var littleEndian = value.littleEndian
-        Swift.withUnsafeBytes(of: &littleEndian) { append(contentsOf: $0) }
-    }
-
-    func uint16LE(at offset: Int) -> UInt16 {
-        guard offset >= 0, offset + 2 <= count else { return 0 }
-        return UInt16(self[offset]) | (UInt16(self[offset + 1]) << 8)
-    }
-
-    func uint32LE(at offset: Int) -> UInt32 {
-        guard offset >= 0, offset + 4 <= count else { return 0 }
-        return UInt32(self[offset])
-            | (UInt32(self[offset + 1]) << 8)
-            | (UInt32(self[offset + 2]) << 16)
-            | (UInt32(self[offset + 3]) << 24)
-    }
-
-    func uint64LE(at offset: Int) -> UInt64 {
-        guard offset >= 0, offset + 8 <= count else { return 0 }
-        var result: UInt64 = 0
-        for index in 0..<8 {
-            result |= UInt64(self[offset + index]) << UInt64(index * 8)
-        }
-        return result
     }
 }

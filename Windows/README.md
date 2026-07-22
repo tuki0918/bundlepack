@@ -1,0 +1,144 @@
+# BundlePack for Windows
+
+This directory contains the native Windows implementation of BundlePack.
+
+## Projects
+
+- `BundlePack.Core` implements the shared `.bundlepack` format, encryption, ZIP validation, creation, and extraction. It does not depend on WinUI and can be tested on any platform with .NET 10.
+- `BundlePack.Windows` is the WinUI 3 desktop application for Windows 10 version 1809 or later.
+- `BundlePack.Thumbnail` is the stream-based Explorer thumbnail COM server.
+- `BundlePack.Thumbnail.Tests` renders encrypted and unencrypted fixtures into 32-bit DIB sections on Windows.
+- `BundlePack.Core.Tests` creates Windows packages and opens the checked-in macOS compatibility fixtures.
+- `Installer` contains the shared and architecture-specific Inno Setup definitions.
+- `Directory.Build.props` centralizes shared compiler, version, repository, and warning settings.
+
+Both native applications use the same format documented in [`../Docs/FORMAT.md`](../Docs/FORMAT.md). They do not share UI code.
+
+## Requirements
+
+- Windows 10 version 1809 or later;
+- Visual Studio 2026 with the Windows application development workload;
+- .NET 10 SDK;
+- Windows App SDK 2.2, restored automatically through NuGet.
+
+The repository-level `global.json` selects .NET 10 and allows roll-forward to
+the newest installed .NET 10 feature band.
+
+## Build and run
+
+Open `BundlePack.Windows.sln` in Visual Studio, select `BundlePack.Windows`, choose `x64` or `ARM64`, and run it.
+
+From a Developer PowerShell prompt:
+
+```powershell
+dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=x64
+dotnet build .\Windows\BundlePack.Windows.sln -c Release -p:Platform=ARM64
+dotnet run --project .\Windows\BundlePack.Core.Tests -c Release -- --repo . --fixtures .\Tests\Compatibility
+```
+
+The WinUI project is currently unpackaged. It creates new archives and supports
+choosing or dropping `.bundlepack` files to open them. The Explorer thumbnail
+provider is built separately and is opt-in for source builds.
+
+This output is intended for development and CI verification. Before publishing
+a Windows binary, run the complete workflow and device checks, provide the
+required runtimes, and sign the application, thumbnail provider, and installer.
+
+Successful GitHub Actions runs publish separate x64 and ARM64 CI artifacts. Each
+artifact keeps the full unpackaged app output together and includes the Explorer
+thumbnail provider plus the current-user registration and removal scripts. Run
+`BundlePack.Windows.exe` in place after extracting the artifact. Install the
+matching .NET 10 and Windows App Runtime prerequisites if necessary. These
+framework-dependent, unsigned artifacts are for testing only and expire after
+14 days.
+
+## CI test installers
+
+The `BundlePack-Windows-Installers-<commit>` artifact contains:
+
+- `BundlePack-Setup-x64.exe` for Intel and AMD Windows;
+- `BundlePack-Setup-arm64.exe` for ARM64 Windows;
+- a SHA-256 checksum beside each installer.
+
+Setup installs BundlePack for the current user under
+`%LocalAppData%\Programs\BundlePack`, creates a Start menu shortcut, adds the
+application to **Open with**, and registers the architecture-matched Explorer
+thumbnail provider. No PowerShell command or administrator prompt is required.
+Windows still controls the user's default app choice and may ask which app should
+open `.bundlepack` the first time.
+
+Each installer build stores its thumbnail provider in a content-addressed
+subdirectory. This allows an update to register the new provider without
+overwriting the previous DLL while Explorer still has it loaded in COM
+Surrogate. Reinstalling the exact same build reuses the existing provider files.
+
+Uninstall BundlePack from Windows **Settings > Apps > Installed apps**. The
+uninstaller removes the installed files and only the BundlePack-owned ProgID,
+capabilities, COM class, thumbnail handler, and shared registry values.
+
+The application and managed thumbnail COM server remain framework-dependent.
+Install the matching .NET 10 and Windows App Runtime prerequisites if Windows
+reports that a runtime is missing. The CI installers are unsigned test builds;
+SmartScreen may warn about them, and they are not release binaries.
+
+The installer definitions are in `Windows/Installer`. Build both installers on
+Windows with Inno Setup 6.3 or later after preparing the raw CI application
+directories:
+
+```powershell
+.\Windows\Scripts\Package-CIArtifacts.ps1
+.\Windows\Scripts\Build-Installers.ps1
+```
+
+CI compiles both architectures on `windows-2022`, installs and uninstalls the
+x64 Setup executable, and verifies its files and registry cleanup. ARM64 Setup
+execution is covered by the manual device checklist below.
+
+## Optional file association for development builds
+
+After building the app, add it to Windows **Open with** for the current user:
+
+```powershell
+.\Windows\Scripts\Register-FileAssociation.ps1 `
+  -ExecutablePath "C:\path\to\BundlePack.Windows.exe" `
+  -ThumbnailProviderPath "C:\path\to\BundlePack.Thumbnail.comhost.dll"
+```
+
+`ThumbnailProviderPath` is optional. When supplied, keep the entire thumbnail
+build-output directory together because the COM host loads its managed assembly,
+runtime configuration, and dependencies from that directory.
+
+The script does not require administrator privileges and does not force a new default application. Windows may ask you to choose BundlePack the first time you open a `.bundlepack` file. Remove both the file and thumbnail registration with:
+
+```powershell
+.\Windows\Scripts\Unregister-FileAssociation.ps1
+```
+
+CI renders all macOS- and Windows-generated fixtures through the x64 provider,
+builds the ARM64 provider, performs registration in the runner's current-user
+registry, verifies the ProgID, icon, open command, supported type, capabilities,
+COM server, and Shell handler, then removes the registration again.
+
+## ARM64 device verification
+
+CI compiles the WinUI app and Explorer thumbnail provider for ARM64, but the
+hosted runner does not execute ARM64 binaries. Before an ARM64 binary release,
+perform this checklist on an ARM64 Windows device:
+
+1. Build `BundlePack.Windows` and `BundlePack.Thumbnail` with `-p:Platform=ARM64`.
+2. Run the app and create encrypted and unencrypted packages containing a file,
+   a zero-byte file, and an empty folder.
+3. Open the packages, cancel one long operation, unlock the encrypted package,
+   and extract both packages.
+4. Register the development file association and thumbnail provider with
+   `Register-FileAssociation.ps1`.
+5. Confirm double-click opening, the custom icon in Explorer icon and list
+   views, and thumbnails for encrypted and unencrypted packages.
+6. Run `Unregister-FileAssociation.ps1` and confirm the ProgID and thumbnail
+   handler are removed.
+
+Record the Windows version, device architecture, and result in the release
+notes. This is a manual release gate until an ARM64 Windows runner executes the
+same checks automatically.
+
+Custom package icons can be PNG, JPEG, BMP, or TIFF images. The app preserves the source aspect ratio and normalizes the image to a transparent 1024 × 1024 PNG. The default icon is shared with the macOS project.

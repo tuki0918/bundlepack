@@ -5,7 +5,6 @@ import UniformTypeIdentifiers
 extension UTType {
     static let bundlePack = UTType(exportedAs: "com.tuki0918.bundlepack", conformingTo: .data)
 }
-
 @MainActor
 final class AppModel: ObservableObject {
     static let shared = AppModel()
@@ -31,107 +30,22 @@ final class AppModel: ObservableObject {
     @Published var lockedArchive: EncryptedBundlePackInfo?
     @Published var openedArchive: BundlePackArchiveInfo?
     @Published var isWorking = false
+    @Published var isCancelling = false
+    @Published var progressFraction: Double?
+    @Published var operationWasCancelled = false
     @Published var statusMessage = ""
     @Published var errorMessage: String?
 
     private var decryptedTemporaryURL: URL?
+    private var cancelActiveWork: (() -> Void)?
 
     private init() {}
 
     deinit {
+        cancelActiveWork?()
         if let decryptedTemporaryURL {
             try? FileManager.default.removeItem(at: decryptedTemporaryURL)
         }
-    }
-
-    func chooseInputFiles() {
-        let panel = NSOpenPanel()
-        panel.title = "Choose Files or Folders to Include"
-        panel.allowsMultipleSelection = true
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = true
-        panel.canCreateDirectories = false
-        guard panel.runModal() == .OK else { return }
-        addInputURLs(panel.urls)
-    }
-
-    func addInputURLs(_ urls: [URL]) {
-        let existing = Set(inputURLs.map(\.standardizedFileURL))
-        inputURLs.append(contentsOf: urls.filter { !existing.contains($0.standardizedFileURL) })
-        if title.isEmpty, let first = inputURLs.first {
-            title = first.deletingPathExtension().lastPathComponent
-        }
-    }
-
-    func addDroppedInputItems(_ providers: [NSItemProvider]) -> Bool {
-        let compatibleProviders = providers.filter {
-            $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
-        }
-        for provider in compatibleProviders {
-            loadDroppedFileURL(from: provider) { [weak self] url in
-                guard let url else { return }
-                Task { @MainActor [weak self] in
-                    self?.addInputURLs([url])
-                }
-            }
-        }
-        return !compatibleProviders.isEmpty
-    }
-
-    func openDroppedArchive(_ providers: [NSItemProvider]) -> Bool {
-        guard let provider = providers.first(where: {
-            $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
-        }) else {
-            return false
-        }
-
-        loadDroppedFileURL(from: provider) { [weak self] url in
-            guard let url else { return }
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                guard url.pathExtension.lowercased() == "bundlepack" else {
-                    self.errorMessage = "Drop a .bundlepack file to open it."
-                    return
-                }
-                self.openArchive(url)
-            }
-        }
-        return true
-    }
-
-    func chooseIcon() {
-        let panel = NSOpenPanel()
-        panel.title = "Choose a Package Icon"
-        panel.allowsMultipleSelection = false
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowedContentTypes = [.png, .jpeg, .tiff, .heic, .svg]
-        guard panel.runModal() == .OK else { return }
-        iconURL = panel.url
-    }
-
-    func useDroppedIcon(_ providers: [NSItemProvider]) -> Bool {
-        guard let provider = providers.first(where: {
-            $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
-        }) else {
-            return false
-        }
-
-        loadDroppedFileURL(from: provider) { [weak self] url in
-            guard let url else { return }
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                guard let image = NSImage(contentsOf: url),
-                      image.size.width > 0,
-                      image.size.height > 0 else {
-                    self.errorMessage = "Drop a PNG, JPEG, TIFF, HEIC, or SVG image."
-                    return
-                }
-                self.iconURL = url
-                self.errorMessage = nil
-            }
-        }
-        return true
     }
 
     func createPackage() {
@@ -176,11 +90,14 @@ final class AppModel: ObservableObject {
             destinationURL: destination
         )
 
-        isWorking = true
-        statusMessage = "Packing files…"
-        Task {
+        beginOperation(message: "Preparing files…")
+        let progress = makeProgressHandler()
+        let worker = Task.detached { try PackageBuilder.create(request, progress: progress) }
+        cancelActiveWork = { worker.cancel() }
+        Task { [weak self] in
+            guard let self else { return }
             do {
-                let result = try await Task.detached { try PackageBuilder.create(request) }.value
+                let result = try await worker.value
                 clearDecryptedArchive()
                 switch result {
                 case .encrypted(let archive):
@@ -199,11 +116,13 @@ final class AppModel: ObservableObject {
                 encryptionPasswordConfirmation = ""
                 section = .open
                 NSWorkspace.shared.activateFileViewerSelecting([destination])
+            } catch is CancellationError {
+                markCancelled("Package creation cancelled")
             } catch {
                 errorMessage = error.localizedDescription
                 statusMessage = ""
             }
-            isWorking = false
+            finishOperation()
         }
     }
 
@@ -220,16 +139,25 @@ final class AppModel: ObservableObject {
 
     func openArchive(_ url: URL) {
         guard !isWorking else { return }
-        isWorking = true
-        statusMessage = "Validating…"
-        Task {
+        beginOperation(message: "Reading package…")
+        let progress = makeProgressHandler()
+        let worker = Task.detached { () -> OpenResult in
+            progress(BundlePackOperationProgress(fractionCompleted: 0.05, message: "Reading package…"))
+            try Task.checkCancellation()
+            let result: OpenResult
+            if BundlePackEncryptedContainer.isEncrypted(url) {
+                result = .encrypted(try BundlePackEncryptedContainer.readPublicInfo(from: url))
+            } else {
+                result = .unencrypted(try ZipArchiveInspector.inspect(url, progress: progress))
+            }
+            progress(BundlePackOperationProgress(fractionCompleted: 1, message: "Package validated"))
+            return result
+        }
+        cancelActiveWork = { worker.cancel() }
+        Task { [weak self] in
+            guard let self else { return }
             do {
-                let result = try await Task.detached { () -> OpenResult in
-                    if BundlePackEncryptedContainer.isEncrypted(url) {
-                        return .encrypted(try BundlePackEncryptedContainer.readPublicInfo(from: url))
-                    }
-                    return .legacy(try ZipArchiveInspector.inspect(url))
-                }.value
+                let result = try await worker.value
                 clearDecryptedArchive()
                 switch result {
                 case .encrypted(let archive):
@@ -238,18 +166,20 @@ final class AppModel: ObservableObject {
                     openedArchive = nil
                     unlockPassword = ""
                     statusMessage = "Encrypted — enter the password to unlock"
-                case .legacy(let archive):
+                case .unencrypted(let archive):
                     applyFinderIcon(archive.iconData, to: url)
                     lockedArchive = nil
                     openedArchive = archive
                     statusMessage = "Warning: this package is not encrypted"
                 }
                 section = .open
+            } catch is CancellationError {
+                markCancelled("Opening cancelled")
             } catch {
                 errorMessage = error.localizedDescription
                 statusMessage = ""
             }
-            isWorking = false
+            finishOperation()
         }
     }
 
@@ -264,25 +194,52 @@ final class AppModel: ObservableObject {
         let decryptedURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("BundlePack-Decrypted-\(UUID().uuidString).zip")
         let password = unlockPassword
-        isWorking = true
-        statusMessage = "Decrypting and validating contents…"
-
-        Task {
+        beginOperation(message: "Decrypting package…")
+        let progress = makeProgressHandler()
+        let worker = Task.detached {
+            try BundlePackEncryptedContainer.open(
+                lockedArchive.url,
+                password: password,
+                to: decryptedURL,
+                progress: { value in
+                    progress(BundlePackOperationProgress(
+                        fractionCompleted: value.fractionCompleted * 0.8,
+                        message: value.message
+                    ))
+                }
+            )
+            let archive = try ZipArchiveInspector.inspect(
+                decryptedURL,
+                progress: { value in
+                    progress(BundlePackOperationProgress(
+                        fractionCompleted: 0.8 + value.fractionCompleted * 0.2,
+                        message: "Validating decrypted contents…"
+                    ))
+                }
+            )
+            guard archive.iconData == lockedArchive.iconData else {
+                throw BundlePackEncryptionError.invalidIcon
+            }
+            return archive
+        }
+        cancelActiveWork = { worker.cancel() }
+        Task { [weak self] in
+            guard let self else { return }
             do {
-                let archive = try await Task.detached {
-                    try BundlePackEncryptedContainer.open(lockedArchive.url, password: password, to: decryptedURL)
-                    return try ZipArchiveInspector.inspect(decryptedURL)
-                }.value
+                let archive = try await worker.value
                 decryptedTemporaryURL = decryptedURL
                 openedArchive = archive
                 unlockPassword = ""
                 statusMessage = "Decrypted and validated"
+            } catch is CancellationError {
+                try? FileManager.default.removeItem(at: decryptedURL)
+                markCancelled("Unlock cancelled — package remains locked")
             } catch {
                 try? FileManager.default.removeItem(at: decryptedURL)
                 errorMessage = error.localizedDescription
                 statusMessage = "Encrypted — package remains locked"
             }
-            isWorking = false
+            finishOperation()
         }
     }
 
@@ -296,40 +253,36 @@ final class AppModel: ObservableObject {
         panel.prompt = "Extract Here"
         guard panel.runModal() == .OK, let parent = panel.url else { return }
 
-        isWorking = true
-        statusMessage = "Validating and extracting safely…"
-        Task {
+        beginOperation(message: "Preparing extraction…")
+        let progress = makeProgressHandler()
+        let worker = Task.detached {
+            try PackageBuilder.extract(archive, to: parent, progress: progress)
+        }
+        cancelActiveWork = { worker.cancel() }
+        Task { [weak self] in
+            guard let self else { return }
             do {
-                let destination = try await Task.detached {
-                    try PackageBuilder.extract(archive.url, to: parent)
-                }.value
+                let destination = try await worker.value
                 statusMessage = "Extracted: \(destination.lastPathComponent)"
                 NSWorkspace.shared.activateFileViewerSelecting([destination])
+            } catch is CancellationError {
+                markCancelled("Extraction cancelled")
             } catch {
                 errorMessage = error.localizedDescription
                 statusMessage = ""
             }
-            isWorking = false
+            finishOperation()
         }
     }
 
-    func removeInput(_ url: URL) {
-        inputURLs.removeAll { $0.standardizedFileURL == url.standardizedFileURL }
+    func cancelOperation() {
+        guard isWorking, !isCancelling else { return }
+        isCancelling = true
+        statusMessage = "Cancelling…"
+        cancelActiveWork?()
     }
 
-    @discardableResult
-    func applyFinderIcon(_ iconData: Data, to url: URL) -> Bool {
-        guard let image = NSImage(data: iconData) else { return false }
-        return NSWorkspace.shared.setIcon(image, forFile: url.path, options: [])
-    }
-
-    private func safeSuggestedName(_ value: String) -> String {
-        value.components(separatedBy: CharacterSet(charactersIn: "/:\\"))
-            .filter { !$0.isEmpty }
-            .joined(separator: "-")
-    }
-
-    private func clearDecryptedArchive() {
+    func clearDecryptedArchive() {
         if let decryptedTemporaryURL {
             try? FileManager.default.removeItem(at: decryptedTemporaryURL)
         }
@@ -337,27 +290,38 @@ final class AppModel: ObservableObject {
         openedArchive = nil
     }
 
+    private func beginOperation(message: String) {
+        isWorking = true
+        isCancelling = false
+        operationWasCancelled = false
+        progressFraction = 0
+        statusMessage = message
+    }
+
+    private func finishOperation() {
+        isWorking = false
+        isCancelling = false
+        progressFraction = nil
+        cancelActiveWork = nil
+    }
+
+    private func markCancelled(_ message: String) {
+        operationWasCancelled = true
+        statusMessage = message
+    }
+
+    private func makeProgressHandler() -> BundlePackProgressHandler {
+        { [weak self] value in
+            Task { @MainActor [weak self] in
+                guard let self, self.isWorking, !self.isCancelling else { return }
+                self.progressFraction = value.fractionCompleted
+                self.statusMessage = value.message
+            }
+        }
+    }
+
     private enum OpenResult: Sendable {
         case encrypted(EncryptedBundlePackInfo)
-        case legacy(BundlePackArchiveInfo)
-    }
-}
-
-private func loadDroppedFileURL(
-    from provider: NSItemProvider,
-    completion: @escaping (URL?) -> Void
-) {
-    provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
-        if let url = item as? URL {
-            completion(url)
-        } else if let url = item as? NSURL {
-            completion(url as URL)
-        } else if let data = item as? Data {
-            completion(URL(dataRepresentation: data, relativeTo: nil))
-        } else if let string = item as? String {
-            completion(URL(string: string))
-        } else {
-            completion(nil)
-        }
+        case unencrypted(BundlePackArchiveInfo)
     }
 }

@@ -7,14 +7,28 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 
+# Visual Studio and .NET build output
+.vs/
+Windows/**/bin/
+Windows/**/obj/
+TestResults/
+*.user
+*.suo
+
 # Compiled apps and distributable archives
 *.app
 *.zip
 *.dmg
 *.pkg
+*.msix
+*.msixbundle
+*.appx
+*.appxbundle
+*.msixupload
 *.xcarchive
 *.xcresult
 *.bundlepack
+!Tests/Compatibility/*.bundlepack
 
 # Local QA screenshots
 *-qa.png
@@ -22,4 +36,9 @@ xcuserdata/
 
 # Signing credentials
 *.p12
+*.pfx
+*.pem
+*.key
+*.snk
 *.mobileprovision
+*.provisionprofile

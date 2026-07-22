@@ -11,7 +11,7 @@ ARCHIVE="$RELEASE_ROOT/BundlePack-$VERSION.zip"
 : "${NOTARYTOOL_PROFILE:?Set NOTARYTOOL_PROFILE to an xcrun notarytool Keychain profile}"
 
 "$ROOT/Scripts/test.sh"
-"$ROOT/Scripts/build.sh"
+BUNDLEPACK_BUILD_DIR="$ROOT/.build" "$ROOT/Scripts/build.sh"
 
 codesign --force --timestamp --options runtime \
   --sign "$APPLE_SIGNING_IDENTITY" \

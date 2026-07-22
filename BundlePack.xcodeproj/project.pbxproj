@@ -9,18 +9,28 @@
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* BundlePackApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* BundlePackApp.swift */; };
 		A10000000000000000000002 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* AppModel.swift */; };
+		A1000000000000000000001F /* AppModel.Input.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* AppModel.Input.swift */; };
 		A10000000000000000000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* ContentView.swift */; };
+		A10000000000000000000016 /* CreatePackageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000019 /* CreatePackageView.swift */; };
+		A10000000000000000000017 /* PasswordGeneratorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001A /* PasswordGeneratorSheet.swift */; };
+		A10000000000000000000018 /* OpenPackageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001B /* OpenPackageView.swift */; };
+		A10000000000000000000019 /* ViewComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001C /* ViewComponents.swift */; };
 		A10000000000000000000004 /* PackageBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* PackageBuilder.swift */; };
+		A1000000000000000000001E /* PackageBuilder.IO.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001F /* PackageBuilder.IO.swift */; };
 		A10000000000000000000005 /* PackageManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* PackageManifest.swift */; };
 		A10000000000000000000006 /* ZipArchiveInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* ZipArchiveInspector.swift */; };
+		A1000000000000000000001A /* ZipArchiveInspector.Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001D /* ZipArchiveInspector.Validation.swift */; };
 		A10000000000000000000007 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* AppIcon.icns */; };
 		A10000000000000000000009 /* DefaultPackageIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* DefaultPackageIcon.png */; };
 		A1000000000000000000000A /* ThumbnailProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* ThumbnailProvider.swift */; };
 		A1000000000000000000000B /* PackageManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* PackageManifest.swift */; };
 		A1000000000000000000000C /* ZipArchiveInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* ZipArchiveInspector.swift */; };
+		A1000000000000000000001B /* ZipArchiveInspector.Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001D /* ZipArchiveInspector.Validation.swift */; };
 		A10000000000000000000010 /* BundlePackThumbnail.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* BundlePackThumbnail.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A10000000000000000000012 /* EncryptedContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* EncryptedContainer.swift */; };
 		A10000000000000000000013 /* EncryptedContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* EncryptedContainer.swift */; };
+		A1000000000000000000001C /* EncryptedContainer.Header.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001E /* EncryptedContainer.Header.swift */; };
+		A1000000000000000000001D /* EncryptedContainer.Header.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001E /* EncryptedContainer.Header.swift */; };
 		A10000000000000000000015 /* PasswordGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* PasswordGenerator.swift */; };
 /* End PBXBuildFile section */
 
@@ -51,10 +61,17 @@
 /* Begin PBXFileReference section */
 		A20000000000000000000001 /* BundlePackApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundlePackApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		A20000000000000000000020 /* AppModel.Input.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.Input.swift; sourceTree = "<group>"; };
 		A20000000000000000000003 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A20000000000000000000019 /* CreatePackageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePackageView.swift; sourceTree = "<group>"; };
+		A2000000000000000000001A /* PasswordGeneratorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordGeneratorSheet.swift; sourceTree = "<group>"; };
+		A2000000000000000000001B /* OpenPackageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenPackageView.swift; sourceTree = "<group>"; };
+		A2000000000000000000001C /* ViewComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewComponents.swift; sourceTree = "<group>"; };
 		A20000000000000000000004 /* PackageBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageBuilder.swift; sourceTree = "<group>"; };
+		A2000000000000000000001F /* PackageBuilder.IO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageBuilder.IO.swift; sourceTree = "<group>"; };
 		A20000000000000000000005 /* PackageManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageManifest.swift; sourceTree = "<group>"; };
 		A20000000000000000000006 /* ZipArchiveInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipArchiveInspector.swift; sourceTree = "<group>"; };
+		A2000000000000000000001D /* ZipArchiveInspector.Validation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipArchiveInspector.Validation.swift; sourceTree = "<group>"; };
 		A20000000000000000000007 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		A20000000000000000000009 /* DefaultPackageIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DefaultPackageIcon.png; sourceTree = "<group>"; };
 		A2000000000000000000000A /* ThumbnailProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailProvider.swift; sourceTree = "<group>"; };
@@ -64,6 +81,7 @@
 		A20000000000000000000011 /* BundlePack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BundlePack.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000000000000000000012 /* BundlePackThumbnail.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BundlePackThumbnail.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000000000000000000017 /* EncryptedContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptedContainer.swift; sourceTree = "<group>"; };
+		A2000000000000000000001E /* EncryptedContainer.Header.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptedContainer.Header.swift; sourceTree = "<group>"; };
 		A20000000000000000000018 /* PasswordGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordGenerator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -97,12 +115,26 @@
 			children = (
 				A20000000000000000000001 /* BundlePackApp.swift */,
 				A20000000000000000000002 /* AppModel.swift */,
-				A20000000000000000000003 /* ContentView.swift */,
+				A20000000000000000000020 /* AppModel.Input.swift */,
+				A40000000000000000000009 /* Views */,
 				A20000000000000000000018 /* PasswordGenerator.swift */,
 				A20000000000000000000004 /* PackageBuilder.swift */,
+				A2000000000000000000001F /* PackageBuilder.IO.swift */,
 				A2000000000000000000000C /* App Info.plist */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000009 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000003 /* ContentView.swift */,
+				A20000000000000000000019 /* CreatePackageView.swift */,
+				A2000000000000000000001A /* PasswordGeneratorSheet.swift */,
+				A2000000000000000000001B /* OpenPackageView.swift */,
+				A2000000000000000000001C /* ViewComponents.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 		A40000000000000000000004 /* Shared */ = {
@@ -110,7 +142,9 @@
 			children = (
 				A20000000000000000000005 /* PackageManifest.swift */,
 				A20000000000000000000006 /* ZipArchiveInspector.swift */,
+				A2000000000000000000001D /* ZipArchiveInspector.Validation.swift */,
 				A20000000000000000000017 /* EncryptedContainer.swift */,
+				A2000000000000000000001E /* EncryptedContainer.Header.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -229,12 +263,20 @@
 			files = (
 				A10000000000000000000001 /* BundlePackApp.swift in Sources */,
 				A10000000000000000000002 /* AppModel.swift in Sources */,
+				A1000000000000000000001F /* AppModel.Input.swift in Sources */,
 				A10000000000000000000003 /* ContentView.swift in Sources */,
+				A10000000000000000000016 /* CreatePackageView.swift in Sources */,
+				A10000000000000000000017 /* PasswordGeneratorSheet.swift in Sources */,
+				A10000000000000000000018 /* OpenPackageView.swift in Sources */,
+				A10000000000000000000019 /* ViewComponents.swift in Sources */,
 				A10000000000000000000015 /* PasswordGenerator.swift in Sources */,
 				A10000000000000000000004 /* PackageBuilder.swift in Sources */,
+				A1000000000000000000001E /* PackageBuilder.IO.swift in Sources */,
 				A10000000000000000000005 /* PackageManifest.swift in Sources */,
 				A10000000000000000000006 /* ZipArchiveInspector.swift in Sources */,
+				A1000000000000000000001A /* ZipArchiveInspector.Validation.swift in Sources */,
 				A10000000000000000000012 /* EncryptedContainer.swift in Sources */,
+				A1000000000000000000001C /* EncryptedContainer.Header.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,7 +287,9 @@
 				A1000000000000000000000A /* ThumbnailProvider.swift in Sources */,
 				A1000000000000000000000B /* PackageManifest.swift in Sources */,
 				A1000000000000000000000C /* ZipArchiveInspector.swift in Sources */,
+				A1000000000000000000001B /* ZipArchiveInspector.Validation.swift in Sources */,
 				A10000000000000000000013 /* EncryptedContainer.swift in Sources */,
+				A1000000000000000000001D /* EncryptedContainer.Header.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -299,7 +343,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 16;
 				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = BundlePack/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
@@ -319,7 +363,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 16;
 				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = BundlePack/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
@@ -339,6 +383,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 16;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = BundlePack/ThumbnailExtension/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../../../Frameworks @executable_path/../Frameworks";
@@ -358,6 +403,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 16;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = BundlePack/ThumbnailExtension/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../../../Frameworks @executable_path/../Frameworks";

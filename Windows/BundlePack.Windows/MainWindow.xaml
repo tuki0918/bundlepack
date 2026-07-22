@@ -1,0 +1,69 @@
+<Window
+    x:Class="BundlePack.Windows.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid x:Name="WindowRoot" Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="1" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid MaxWidth="1120" Padding="32,18" HorizontalAlignment="Stretch" ColumnSpacing="28">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <Image Source="ms-appx:///Assets/DefaultPackageIcon.png" Width="48" Height="48" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="BundlePack" FontSize="24" FontWeight="SemiBold" />
+                    <TextBlock
+                        Text="Bundle files into one shareable package"
+                        Opacity="0.65"
+                        TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </StackPanel>
+
+            <Border
+                Grid.Column="1"
+                Padding="4"
+                VerticalAlignment="Center"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <ToggleButton
+                        x:Name="CreateNavigationButton"
+                        Width="142"
+                        Height="42"
+                        IsChecked="True"
+                        Click="CreateNavigationButton_Click"
+                        AutomationProperties.Name="Create a BundlePack">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <SymbolIcon Symbol="Add" />
+                            <TextBlock Text="Create" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton
+                        x:Name="OpenNavigationButton"
+                        Width="142"
+                        Height="42"
+                        Click="OpenNavigationButton_Click"
+                        AutomationProperties.Name="Open a BundlePack">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <SymbolIcon Symbol="OpenFile" />
+                            <TextBlock Text="Open" />
+                        </StackPanel>
+                    </ToggleButton>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Rectangle Grid.Row="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+        <Grid x:Name="PageHost" Grid.Row="2" />
+    </Grid>
+</Window>

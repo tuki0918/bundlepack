@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func application(_ application: NSApplication, open urls: [URL]) {
         guard let url = urls.first else { return }
@@ -8,6 +9,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AppModel.shared.openArchive(url)
             application.activate(ignoringOtherApps: true)
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        AppModel.shared.clearDecryptedArchive()
     }
 }
 

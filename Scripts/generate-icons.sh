@@ -4,10 +4,11 @@ set -euo pipefail
 ROOT="${0:A:h:h}"
 APP_ICON_RENDERER="$ROOT/Scripts/render-app-icon.swift"
 ICNS_BUILDER="$ROOT/Scripts/create-icns.swift"
-CACHE="${TMPDIR:-/tmp}/BundlePackIconModuleCache"
+CACHE="$(mktemp -d "${TMPDIR:-/tmp}/BundlePackIconModuleCache.XXXXXX")"
 ICONSET="$CACHE/AppIcon.iconset"
+WINDOWS_ASSETS="$ROOT/Windows/BundlePack.Windows/Assets"
+trap 'rm -rf "$CACHE"' EXIT
 
-rm -rf "$ICONSET"
 mkdir -p "$ICONSET"
 
 render_app_icon_png() {
@@ -31,5 +32,12 @@ xcrun swift -module-cache-path "$CACHE" \
   "$ICONSET" \
   "$ROOT/BundlePack/Resources/AppIcon.icns"
 render_app_icon_png "$ROOT/BundlePack/Resources/DefaultPackageIcon.png" 1024
+mkdir -p "$WINDOWS_ASSETS"
+sips -z 256 256 \
+  "$ROOT/BundlePack/Resources/DefaultPackageIcon.png" \
+  --out "$CACHE/AppIcon-256.png" >/dev/null
+sips -s format ico \
+  "$CACHE/AppIcon-256.png" \
+  --out "$WINDOWS_ASSETS/AppIcon.ico" >/dev/null
 
-echo "BundlePack app and default package icons regenerated."
+echo "BundlePack macOS, Windows, and default package icons regenerated."
