@@ -51,6 +51,8 @@ All notable changes to BundlePack are documented in this file.
 - macOS file-picker, drag-and-drop, and Finder-icon interactions are separated from package workflow state handling.
 - Native macOS and Windows sources and guides are organized under peer platform directories, while shared fixtures and repository tooling use neutral top-level directories.
 - Native macOS and Windows CI jobs run independently, with bidirectional interoperability enforced by a separate compatibility job.
+- macOS and Windows smoke tests are split into focused scenario and support sources, and Windows UI operation state and display models are separated from the main XAML code-behind files.
+- Repository metadata checks now verify the minimum supported macOS and Windows versions across project, build, test, and installer declarations.
 
 ### Security
 

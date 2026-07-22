@@ -24,6 +24,8 @@ Windows WinUI app ─┘
   Encrypted-container operations are separated from binary-header parsing,
   PBKDF2 key derivation, and nonce construction.
 - `macOS/BundlePack/ThumbnailExtension` contains the optional Finder thumbnail provider.
+- `macOS/Tests` keeps end-to-end orchestration, archive-validation scenarios,
+  and reusable smoke-test support in separate Swift sources.
 - `Windows/BundlePack.Core` contains the UI-independent C# format implementation.
   Archive orchestration, validation, and ZIP writing are kept in focused partial
   class files so the format checks can evolve without growing one monolithic source.
@@ -31,7 +33,11 @@ Windows WinUI app ─┘
   the same reason while retaining one public API.
   Package workflow entry points are likewise separated from filesystem staging
   and stable-snapshot helpers.
-- `Windows/BundlePack.Windows` contains the native WinUI 3 application.
+- `Windows/BundlePack.Core.Tests` separates the executable test flow, hostile
+  archive scenarios, and shared fixture helpers.
+- `Windows/BundlePack.Windows` contains the native WinUI 3 application. Create
+  and Open workflows keep operation-state partials and display models outside
+  the main XAML code-behind files.
 - `Windows/BundlePack.Thumbnail` contains the stream-isolated Explorer thumbnail COM server.
 - `Windows/BundlePack.Thumbnail.Tests` exercises its icon decoding and 32-bit DIB output on Windows.
 - `Windows/Installer` contains per-user x64 and ARM64 Inno Setup definitions.
@@ -48,6 +54,9 @@ The repository root treats `macOS` and `Windows` as peer platform boundaries.
 Each directory owns its native source, projects, scripts, tests, and platform
 guide. Shared fixtures, contracts, and repository-wide tooling remain outside
 the platform directories.
+
+Repository metadata validation also keeps each platform's minimum supported OS
+consistent across its native project, command-line build, and packaging files.
 
 ## Compatibility gates
 

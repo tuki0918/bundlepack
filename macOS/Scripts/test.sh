@@ -21,6 +21,8 @@ xcrun swiftc \
   -parse-as-library \
   -o "$TEST_ROOT/end-to-end-smoke" \
   "$MACOS_ROOT/Tests/EndToEndSmoke.swift" \
+  "$MACOS_ROOT/Tests/EndToEndSmoke.ArchiveValidation.swift" \
+  "$MACOS_ROOT/Tests/EndToEndSmoke.Support.swift" \
   "${BUNDLEPACK_CORE_SOURCES[@]}" \
   -framework AppKit \
   -framework UniformTypeIdentifiers \
