@@ -5,21 +5,38 @@ distribution have different requirements.
 
 ## Current recommendation
 
-Publish the repository and, if desired, create a source-only GitHub release.
-Do not attach locally built macOS or Windows application binaries yet.
+Successful pushes to `main` provide macOS universal, Windows x64, Windows ARM64,
+and Windows installer artifacts for seven days. A `v<version>` tag creates a
+GitHub prerelease whose versioned application and installer assets remain
+available until the release is deleted.
 
-Successful CI runs provide short-lived macOS universal, Windows x64, Windows
-ARM64, and Windows installer artifacts for testing. They are ad-hoc signed or
-unsigned development builds, not approved release assets.
+The automated macOS application is ad-hoc signed and not notarized. Automated
+Windows applications and installers are unsigned. Keep these releases marked as
+prereleases and describe their assets as testing builds, not trusted end-user
+binaries.
 
-## Source-only release
+## Automated test prerelease
 
 1. Confirm the version and release notes in `CHANGELOG.md`.
-2. Run `./macOS/Scripts/test.sh` and `./macOS/Scripts/build.sh` on macOS.
-3. Run `.\Windows\Scripts\Test.ps1` and `.\Windows\Scripts\Build.ps1` on Windows.
-4. Commit and push the intended files without signing credentials or generated build output.
-5. Wait for CI, dependency review, and CodeQL checks to pass.
-6. Create the Git tag and GitHub release without binary attachments. GitHub provides source-code ZIP and tar archives automatically.
+2. Keep `CFBundleShortVersionString`, Xcode `MARKETING_VERSION`, and Windows
+   `VersionPrefix` synchronized.
+3. Run `./macOS/Scripts/test.sh` and `./macOS/Scripts/build.sh` on macOS.
+4. Run `.\Windows\Scripts\Test.ps1` and `.\Windows\Scripts\Build.ps1` on Windows.
+5. Commit and push the intended files without signing credentials or generated
+   build output, then wait for CI, dependency review, and CodeQL to pass.
+6. Create and push a matching tag, for example `v0.1.0`:
+
+   ```sh
+   git tag v0.1.0
+   git push origin v0.1.0
+   ```
+
+7. Wait for the Release workflow to test both native implementations, build all
+   assets, verify the tag version, and create the GitHub prerelease.
+
+The workflow attaches versioned macOS and Windows application archives, x64 and
+ARM64 Windows installers, and SHA-256 checksum files. Rerunning the publish job
+replaces assets with the same names on the existing prerelease.
 
 ## macOS binary release
 

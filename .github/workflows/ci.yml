@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -57,22 +59,22 @@ jobs:
         shell: pwsh
         run: .\Windows\Scripts\Package-CIArtifacts.ps1
 
-      - name: Upload Windows x64 application
+      - name: Upload Windows x64 application for downstream jobs
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: BundlePack-Windows-x64-${{ github.sha }}
+          name: BundlePack-Windows-x64-intermediate-${{ github.run_id }}
           path: .build/artifacts/BundlePack-Windows-x64
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1
           compression-level: 6
 
-      - name: Upload Windows ARM64 application
+      - name: Upload Windows ARM64 application for downstream jobs
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: BundlePack-Windows-arm64-${{ github.sha }}
+          name: BundlePack-Windows-arm64-intermediate-${{ github.run_id }}
           path: .build/artifacts/BundlePack-Windows-arm64
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1
           compression-level: 6
 
       - name: Upload Windows compatibility fixtures
@@ -81,7 +83,7 @@ jobs:
           name: BundlePack-Windows-Fixtures-${{ github.sha }}
           path: .build/windows-fixtures
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 1
 
   windows-installer:
     needs: windows-test-and-build
@@ -95,13 +97,13 @@ jobs:
       - name: Download Windows x64 application
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
-          name: BundlePack-Windows-x64-${{ github.sha }}
+          name: BundlePack-Windows-x64-intermediate-${{ github.run_id }}
           path: .build/artifacts/BundlePack-Windows-x64
 
       - name: Download Windows ARM64 application
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
-          name: BundlePack-Windows-arm64-${{ github.sha }}
+          name: BundlePack-Windows-arm64-intermediate-${{ github.run_id }}
           path: .build/artifacts/BundlePack-Windows-arm64
 
       - name: Build x64 and ARM64 installers
@@ -114,7 +116,28 @@ jobs:
           .\Windows\Tests\Test-Installer.ps1 `
             -InstallerPath .\.build\installers\BundlePack-Setup-x64.exe
 
+      - name: Upload Windows x64 test application
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: BundlePack-Windows-x64-${{ github.sha }}
+          path: .build/artifacts/BundlePack-Windows-x64
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+
+      - name: Upload Windows ARM64 test application
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: BundlePack-Windows-arm64-${{ github.sha }}
+          path: .build/artifacts/BundlePack-Windows-arm64
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+
       - name: Upload Windows installers
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: BundlePack-Windows-Installers-${{ github.sha }}
@@ -124,7 +147,7 @@ jobs:
             .build/installers/BundlePack-Setup-arm64.exe
             .build/installers/BundlePack-Setup-arm64.exe.sha256
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
           compression-level: 0
 
   macos-test-and-build:
@@ -156,6 +179,7 @@ jobs:
             .build/BundlePack.app/Contents/PlugIns/BundlePackThumbnail.appex/Contents/Info.plist
 
       - name: Package macOS CI application
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           mkdir -p .build/artifacts
           ditto \
@@ -169,6 +193,7 @@ jobs:
             > BundlePack-macOS-universal.zip.sha256
 
       - name: Upload macOS universal application
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: BundlePack-macOS-universal-${{ github.sha }}
@@ -176,7 +201,7 @@ jobs:
             .build/artifacts/BundlePack-macOS-universal.zip
             .build/artifacts/BundlePack-macOS-universal.zip.sha256
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
           compression-level: 0
 
   cross-platform-compatibility:

@@ -51,10 +51,14 @@ distributing the app, sign it with an Apple Developer ID and notarize it.
 
 ## CI Test Application
 
-Every successful CI workflow run provides a
-`BundlePack-macOS-universal-<commit>` artifact for 14 days. It contains a ZIP
-of the universal app and its SHA-256 checksum. The app is ad-hoc signed and not
-notarized, so it is intended only for short-lived testing.
+Every successful push to `main` provides a
+`BundlePack-macOS-universal-<commit>` artifact for seven days. Pull requests
+build and verify the app without retaining a downloadable macOS artifact.
+
+A matching `v<version>` tag attaches a versioned ZIP and its SHA-256 checksum
+to an automatically created GitHub prerelease. Release Assets remain available
+until the release is deleted. The automated app is ad-hoc signed and not
+notarized, so it remains a testing build even when attached to a prerelease.
 
 ## Signed Binary
 

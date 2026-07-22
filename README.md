@@ -54,15 +54,21 @@ The application code and platform-specific documentation are kept together.
 | macOS | Swift, SwiftUI, AppKit, CryptoKit | [macOS/README.md](macOS/README.md) |
 | Windows | C#, WinUI 3, .NET cryptography | [Windows/README.md](Windows/README.md) |
 
-Pull requests and pushes are checked on both operating systems by GitHub
-Actions. Windows opens the checked-in macOS fixtures and creates Windows
-fixtures; macOS then opens those Windows-generated files. Successful workflow
-runs provide short-lived test applications for macOS universal, Windows x64,
-Windows ARM64, and Windows x64/ARM64 installers. Pull requests also receive
-dependency review, and CodeQL analyzes the native C# and Swift sources.
+Pull requests and pushes to `main` are checked on both operating systems by
+GitHub Actions. Windows opens the checked-in macOS fixtures and creates Windows
+fixtures; macOS then opens those Windows-generated files. Successful pushes to
+`main` provide test applications for macOS universal, Windows x64, Windows
+ARM64, and Windows x64/ARM64 installers for seven days. Pull requests also
+receive dependency review, and CodeQL analyzes the native C# and Swift sources.
+
+Pushing a `v<version>` tag that matches the synchronized project version runs
+the native checks and creates or updates a GitHub prerelease. Versioned macOS
+and Windows applications, installers, and SHA-256 checksums are attached as
+Release Assets and remain available until that GitHub release is deleted.
 
 See [Docs/RELEASE.md](Docs/RELEASE.md) before publishing source or binaries.
-CI applications are ad-hoc signed or unsigned test builds, not release binaries.
+Automated applications are ad-hoc signed or unsigned test builds, not trusted
+end-user binaries.
 
 ## Package Format
 

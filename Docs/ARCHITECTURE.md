@@ -85,6 +85,13 @@ Unicode composition form.
 Pull requests also receive dependency review. CodeQL builds and analyzes the
 C# and Swift applications independently on their native runners.
 
+The CI workflow runs for pull requests and pushes to `main`. Cross-job Windows
+applications and compatibility fixtures expire after one day; downloadable
+testing applications from successful `main` builds expire after seven days. A
+separate `v<version>` tag workflow repeats the native release checks and copies
+versioned assets into a GitHub prerelease, where they remain until the release
+is deleted.
+
 Format changes must update `Docs/FORMAT.md`, both native implementations, the
 fixture generators, and the bidirectional tests in the same pull request. A new
 incompatible layout requires a new container or manifest version.

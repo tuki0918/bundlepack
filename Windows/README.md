@@ -62,13 +62,18 @@ This output is intended for development and CI verification. Before publishing
 a Windows binary, run the complete workflow and device checks, provide the
 required runtimes, and sign the application, thumbnail provider, and installer.
 
-Successful GitHub Actions runs publish separate x64 and ARM64 CI artifacts. Each
-artifact keeps the full unpackaged app output together and includes the Explorer
-thumbnail provider plus the current-user registration and removal scripts. Run
-`BundlePack.Windows.exe` in place after extracting the artifact. Install the
-matching .NET 10 and Windows App Runtime prerequisites if necessary. These
-framework-dependent, unsigned artifacts are for testing only and expire after
-14 days.
+Successful pushes to `main` publish separate x64 and ARM64 CI artifacts for
+seven days. Each artifact keeps the full unpackaged app output together and
+includes the Explorer thumbnail provider plus the current-user registration and
+removal scripts. Pull requests retain only one-day internal artifacts needed by
+downstream installer and compatibility jobs.
+
+Run `BundlePack.Windows.exe` in place after extracting an application artifact.
+Install the matching .NET 10 and Windows App Runtime prerequisites if necessary.
+A matching `v<version>` tag attaches versioned application ZIPs, installers, and
+SHA-256 checksums to an automatically created GitHub prerelease. Those Release
+Assets remain available until the release is deleted. All automated Windows
+applications and installers are framework-dependent, unsigned testing builds.
 
 ## CI Test Installers
 

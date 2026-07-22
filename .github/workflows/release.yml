@@ -1,0 +1,191 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows-release:
+    runs-on: windows-2022
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Validate tag version
+        shell: pwsh
+        run: |
+          $tagVersion = $env:GITHUB_REF_NAME.Substring(1)
+          [xml]$props = Get-Content -LiteralPath .\Windows\Directory.Build.props -Raw
+          $projectVersion = [string]$props.Project.PropertyGroup.VersionPrefix
+          if ($tagVersion -ne $projectVersion) {
+            throw "Tag $env:GITHUB_REF_NAME does not match Windows version $projectVersion."
+          }
+
+      - name: Run Windows tests and build x64 application
+        shell: pwsh
+        run: .\Windows\Scripts\Test.ps1 -Platform x64
+
+      - name: Build ARM64 application and thumbnail provider
+        shell: pwsh
+        run: .\Windows\Scripts\Build.ps1 -Platforms ARM64
+
+      - name: Prepare Windows applications
+        shell: pwsh
+        run: .\Windows\Scripts\Package-CIArtifacts.ps1
+
+      - name: Build x64 and ARM64 installers
+        shell: pwsh
+        run: .\Windows\Scripts\Build-Installers.ps1
+
+      - name: Test x64 install and uninstall
+        shell: pwsh
+        run: |
+          .\Windows\Tests\Test-Installer.ps1 `
+            -InstallerPath .\.build\installers\BundlePack-Setup-x64.exe
+
+      - name: Package Windows release assets
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1)
+          $releaseRoot = Join-Path $PWD ".build\release-assets"
+          New-Item -ItemType Directory -Path $releaseRoot -Force | Out-Null
+
+          foreach ($architecture in @("x64", "arm64")) {
+            $sourceDirectory = Join-Path $PWD ".build\artifacts\BundlePack-Windows-$architecture"
+            $archiveName = "BundlePack-Windows-$architecture-$version.zip"
+            $archivePath = Join-Path $releaseRoot $archiveName
+            Compress-Archive `
+              -LiteralPath $sourceDirectory `
+              -DestinationPath $archivePath `
+              -CompressionLevel Optimal
+            $hash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $archiveName" | Set-Content -LiteralPath "$archivePath.sha256" -Encoding ascii
+          }
+
+          foreach ($architecture in @("x64", "arm64")) {
+            $sourcePath = Join-Path $PWD ".build\installers\BundlePack-Setup-$architecture.exe"
+            $assetName = "BundlePack-Setup-$architecture-$version.exe"
+            $assetPath = Join-Path $releaseRoot $assetName
+            Copy-Item -LiteralPath $sourcePath -Destination $assetPath
+            $hash = (Get-FileHash -LiteralPath $assetPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $assetName" | Set-Content -LiteralPath "$assetPath.sha256" -Encoding ascii
+          }
+
+      - name: Upload Windows release assets for publishing
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: BundlePack-Release-Windows-${{ github.sha }}
+          path: .build/release-assets
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  macos-release:
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Validate synchronized metadata and tag version
+        run: |
+          ./Scripts/verify-project-metadata.sh
+          version="$(plutil -extract CFBundleShortVersionString raw macOS/BundlePack/App/Info.plist)"
+          test "$GITHUB_REF_NAME" = "v$version" || {
+            echo "Tag $GITHUB_REF_NAME does not match macOS version $version." >&2
+            exit 1
+          }
+
+      - name: Run macOS smoke tests
+        run: ./macOS/Scripts/test.sh
+
+      - name: Build universal application
+        run: ./macOS/Scripts/build.sh
+
+      - name: Verify application bundle
+        run: |
+          for binary in \
+            .build/BundlePack.app/Contents/MacOS/BundlePack \
+            .build/BundlePack.app/Contents/PlugIns/BundlePackThumbnail.appex/Contents/MacOS/BundlePackThumbnail
+          do
+            architectures="$(lipo -archs "$binary")"
+            test "$architectures" = "x86_64 arm64" || test "$architectures" = "arm64 x86_64"
+          done
+          codesign --verify --deep --strict .build/BundlePack.app
+          plutil -lint \
+            .build/BundlePack.app/Contents/Info.plist \
+            .build/BundlePack.app/Contents/PlugIns/BundlePackThumbnail.appex/Contents/Info.plist
+
+      - name: Package macOS release assets
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          release_root=".build/release-assets"
+          archive_name="BundlePack-macOS-universal-$version.zip"
+          mkdir -p "$release_root"
+          ditto \
+            -c -k --sequesterRsrc --keepParent \
+            .build/BundlePack.app \
+            "$release_root/$archive_name"
+          unzip -tq "$release_root/$archive_name"
+          cd "$release_root"
+          shasum -a 256 "$archive_name" > "$archive_name.sha256"
+
+      - name: Upload macOS release assets for publishing
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: BundlePack-Release-macOS-${{ github.sha }}
+          path: .build/release-assets
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  publish-release:
+    needs:
+      - windows-release
+      - macos-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          pattern: BundlePack-Release-*-${{ github.sha }}
+          path: .release-assets
+          merge-multiple: true
+
+      - name: Create or update GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_NOTES: |
+            > [!WARNING]
+            > These automated binaries are testing builds. The macOS application is ad-hoc signed and not notarized; the Windows applications and installers are unsigned.
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" .release-assets/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" .release-assets/* \
+              --verify-tag \
+              --prerelease \
+              --generate-notes \
+              --notes "$RELEASE_NOTES" \
+              --title "BundlePack $GITHUB_REF_NAME"
+          fi

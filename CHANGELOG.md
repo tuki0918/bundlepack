@@ -22,6 +22,7 @@ All notable changes to BundlePack are documented in this file.
 - Cross-platform coverage for empty folders, zero-byte files, same-name file/folder inputs, and cancellation cleanup.
 - Short-lived CI application artifacts for universal macOS, Windows x64, and Windows ARM64 testing.
 - Per-user x64 and ARM64 Windows Setup executables that automatically install and remove the application, file association, and Explorer thumbnail provider.
+- Automated `v<version>` tag prereleases with retained, versioned macOS and Windows testing assets and SHA-256 checksums.
 
 ### Changed
 
@@ -36,7 +37,8 @@ All notable changes to BundlePack are documented in this file.
 - macOS package icons are rendered into an explicit 1024 × 1024 bitmap so Retina display scaling cannot produce an invalid embedded icon.
 - Unencrypted packages are staged in the destination directory before replacement, including when saving to another volume.
 - GitHub Actions dependencies are pinned to immutable revisions and monitored by Dependabot.
-- CI macOS builds are verification-only; public binary distribution uses the separate signed and notarized release workflow.
+- Pull requests retain only one-day cross-job artifacts; successful `main` builds retain downloadable testing applications for seven days.
+- Automated macOS prerelease builds are verification-only; trusted public binary distribution still uses the separate signed and notarized release workflow.
 - The macOS SwiftUI screens are separated into focused files under `macOS/BundlePack/App/Views`.
 - Swift source lists are centralized and checked against the filesystem and Xcode project during tests.
 - The Windows archive implementation is separated into orchestration, validation, and ZIP-writing source files.
