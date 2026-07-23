@@ -7,6 +7,8 @@ packages easy to recognize at a glance. Packages can be created and opened on
 either platform, encrypted for privacy (the default), or stored as standard
 ZIP-compatible archives.
 
+![](Docs/Images/overview.png)
+
 ## Highlights
 
 - Give each package a custom thumbnail that appears in Finder and Windows Explorer.
