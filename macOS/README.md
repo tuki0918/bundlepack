@@ -40,7 +40,7 @@ chmod +x macOS/Scripts/*.sh
 The universal Apple silicon and Intel app is written to
 `.build/BundlePack.app`. You can also open
 `macOS/BundlePack.xcodeproj` and build the `BundlePack` scheme in Xcode.
-Create the same ZIP and SHA-256 files used by CI with:
+Create the same ZIP and SHA-256 files used by the release workflow with:
 
 ```sh
 ./macOS/Scripts/package-artifact.sh
@@ -55,11 +55,12 @@ Remove generated macOS and Windows build output and Finder metadata with:
 The command-line build uses an ad-hoc signature for local testing. Before
 distributing the app, sign it with an Apple Developer ID and notarize it.
 
-## CI Test Application
+## CI and Release Builds
 
-Every successful push to `main` provides a
-`BundlePack-macOS-universal-<commit>` artifact for seven days. Pull requests
-build and verify the app without retaining a downloadable macOS artifact.
+Pull requests and pushes to `main` run the macOS smoke tests. Pushes to `main`
+also build the universal application for CodeQL without uploading it. The
+release workflow rebuilds and verifies the application bundle but does not
+repeat CodeQL.
 
 A matching `v<version>` tag attaches a versioned ZIP and its SHA-256 checksum
 to an automatically created GitHub prerelease. Release Assets remain available

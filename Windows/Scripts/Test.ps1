@@ -7,6 +7,7 @@ param(
     [string]$Platform = "x64",
     [string]$FixturesDirectory = "",
     [string]$FixtureOutput = "",
+    [switch]$CoreOnly,
     [switch]$SkipFileAssociation
 )
 
@@ -59,14 +60,20 @@ if (Test-Path -LiteralPath $FixtureOutput) {
     Remove-Item -LiteralPath $FixtureOutput -Recurse -Force
 }
 
-Invoke-DotNet -Arguments @(
+$restoreTarget = $solution
+$restoreOptions = @("-p:Platform=$Platform")
+if ($CoreOnly) {
+    $restoreTarget = $coreTestsProject
+    $restoreOptions = @()
+}
+
+Invoke-DotNet -Arguments (@(
     "restore",
-    $solution,
+    $restoreTarget,
     "--locked-mode",
     "-p:NuGetAudit=true",
-    "-p:NuGetAuditMode=all",
-    "-p:Platform=$Platform"
-)
+    "-p:NuGetAuditMode=all"
+) + $restoreOptions)
 Invoke-DotNet -Arguments @(
     "build",
     $coreTestsProject,
@@ -90,6 +97,11 @@ Invoke-DotNet -Arguments @(
     "--output",
     $FixtureOutput
 )
+
+if ($CoreOnly) {
+    Write-Host "All BundlePack Windows core tests passed."
+    return
+}
 
 & (Join-Path $PSScriptRoot "Build.ps1") `
     -RepositoryRoot $RepositoryRoot `

@@ -42,6 +42,8 @@ From a Developer PowerShell prompt:
 runs the core compatibility and thumbnail tests, and verifies temporary
 current-user file-association registration and cleanup. Pass
 `-SkipFileAssociation` when registry integration is intentionally out of scope.
+Pass `-CoreOnly` to run only the core tests and generate compatibility fixtures;
+this is the lightweight mode used by normal CI.
 `Build.ps1` builds x64 and ARM64 by default; use `-Platforms x64` or
 `-Platforms ARM64` to build one architecture.
 
@@ -58,27 +60,26 @@ The WinUI project is currently unpackaged. It creates new archives and supports
 choosing or dropping `.bundlepack` files to open them. The Explorer thumbnail
 provider is built separately and is opt-in for source builds.
 
-This output is intended for development and CI verification. Before publishing
-a Windows binary, run the complete workflow and device checks, provide the
-required runtimes, and sign the application, thumbnail provider, and installer.
+This output is intended for development and release verification. Before
+publishing a Windows binary, run the complete workflow and device checks,
+provide the required runtimes, and sign the application, thumbnail provider,
+and installer.
 
-Successful pushes to `main` publish separate x64 and ARM64 CI artifacts for
-seven days. Each artifact keeps the full unpackaged app output together and
-includes the Explorer thumbnail provider plus the current-user registration and
-removal scripts. Pull requests retain only one-day internal artifacts needed by
-downstream installer and compatibility jobs.
+Pull requests and pushes to `main` run core and interoperability tests. Pushes
+to `main` additionally compile the x64 application and thumbnail provider while
+running CodeQL, without uploading them. Full x64/ARM64 application,
+thumbnail-provider, installer, and registration checks run for a matching
+release tag; CodeQL is not repeated there.
 
-Run `BundlePack.Windows.exe` in place after extracting an application artifact.
-Install the matching .NET 10 and Windows App Runtime prerequisites if necessary.
 A matching `v<version>` tag attaches versioned application ZIPs, installers, and
 SHA-256 checksums to an automatically created GitHub prerelease. Those Release
 Assets remain available until the release is deleted and receive GitHub
 build-provenance attestations. All automated Windows applications and installers
 are framework-dependent, unsigned testing builds.
 
-## CI Test Installers
+## Release Test Installers
 
-The `BundlePack-Windows-Installers-<commit>` artifact contains:
+The release assets contain:
 
 - `BundlePack-Setup-x64.exe` for Intel and AMD Windows;
 - `BundlePack-Setup-arm64.exe` for ARM64 Windows;
@@ -102,7 +103,7 @@ capabilities, COM class, thumbnail handler, and shared registry values.
 
 The application and managed thumbnail COM server remain framework-dependent.
 Install the matching .NET 10 and Windows App Runtime prerequisites if Windows
-reports that a runtime is missing. The CI installers are unsigned test builds;
+reports that a runtime is missing. The release installers are unsigned test builds;
 SmartScreen may warn about them, and they are not release binaries.
 
 The installer definitions are in `Windows/Installer`. Build both installers on
@@ -119,9 +120,9 @@ directories:
 The final command creates the same versioned ZIP, installer copies, and SHA-256
 files that the tag workflow publishes.
 
-CI compiles both architectures on `windows-2022`, installs and uninstalls the
-x64 Setup executable, and verifies its files and registry cleanup. ARM64 Setup
-execution is covered by the manual device checklist below.
+The release workflow compiles both architectures on `windows-2022`, installs
+and uninstalls the x64 Setup executable, and verifies its files and registry
+cleanup. ARM64 Setup execution is covered by the manual device checklist below.
 
 ## Explorer Thumbnails
 
@@ -169,16 +170,17 @@ The script does not require administrator privileges and does not force a new de
 .\Windows\Scripts\Unregister-FileAssociation.ps1
 ```
 
-CI renders all macOS- and Windows-generated fixtures through the x64 provider,
-builds the ARM64 provider, performs registration in the runner's current-user
-registry, verifies the ProgID, icon, open command, supported type, capabilities,
-COM server, and Shell handler, then removes the registration again.
+The release workflow renders all macOS- and Windows-generated fixtures through
+the x64 provider, builds the ARM64 provider, performs registration in the
+runner's current-user registry, verifies the ProgID, icon, open command,
+supported type, capabilities, COM server, and Shell handler, then removes the
+registration again.
 
 ## ARM64 Device Verification
 
-CI compiles the WinUI app and Explorer thumbnail provider for ARM64, but the
-hosted runner does not execute ARM64 binaries. Before an ARM64 binary release,
-perform this checklist on an ARM64 Windows device:
+The release workflow compiles the WinUI app and Explorer thumbnail provider for
+ARM64, but the hosted runner does not execute ARM64 binaries. Before an ARM64
+binary release, perform this checklist on an ARM64 Windows device:
 
 1. Build `BundlePack.Windows` and `BundlePack.Thumbnail` with `-p:Platform=ARM64`.
 2. Run the app and create encrypted and unencrypted packages containing a file,

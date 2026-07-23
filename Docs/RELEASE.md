@@ -5,15 +5,18 @@ distribution have different requirements.
 
 ## Current recommendation
 
-Successful pushes to `main` provide macOS universal, Windows x64, Windows ARM64,
-and Windows installer artifacts for seven days. A `v<version>` tag creates a
-GitHub prerelease whose versioned application and installer assets remain
-available until the release is deleted.
+Pull requests run lightweight native and interoperability tests. Pushes to
+`main` run the same tests plus C# and Swift CodeQL; CodeQL's manual builds also
+compile the x64 Windows and universal macOS applications. Neither workflow
+produces downloadable application or installer artifacts. A `v<version>` tag
+runs the full builds and creates a GitHub prerelease whose versioned application
+and installer assets remain available until the release is deleted.
 
 The tag must point to a commit reachable from the repository's default branch.
 Before publication, the Release workflow reruns both native test suites, opens
-its Windows-generated compatibility fixtures on macOS, and creates provenance
-attestations for every application archive and installer.
+its Windows-generated compatibility fixtures on macOS and creates provenance
+attestations for every application archive and installer. CodeQL runs only for
+pushes to `main`, not again for release tags.
 
 The automated macOS application is ad-hoc signed and not notarized. Automated
 Windows applications and installers are unsigned. Keep these releases marked as
@@ -28,7 +31,8 @@ binaries.
 3. Run `./macOS/Scripts/test.sh` and `./macOS/Scripts/build.sh` on macOS.
 4. Run `.\Windows\Scripts\Test.ps1` and `.\Windows\Scripts\Build.ps1` on Windows.
 5. Commit and push the intended files without signing credentials or generated
-   build output, then wait for CI, dependency review, and CodeQL to pass.
+   build output, then wait for CI, dependency review, and the `main` CodeQL
+   checks to pass.
 6. Create and push a matching tag, for example `v0.1.0`:
 
    ```sh
@@ -37,9 +41,9 @@ binaries.
    ```
 
 7. Wait for the Release workflow to confirm that the tagged commit belongs to
-   the default branch, test both native implementations, open the generated
-   Windows fixtures on macOS, attest the assets, and create the GitHub
-   prerelease.
+   the default branch, test and build both native implementations, test the
+   installers, open the generated Windows fixtures on macOS, attest the assets,
+   and create the GitHub prerelease.
 
 The workflow attaches versioned macOS and Windows application archives, x64 and
 ARM64 Windows installers, and SHA-256 checksum files. Rerunning the publish job
@@ -73,7 +77,7 @@ required checks succeed.
 The WinUI 3 application remains unpackaged internally and is wrapped by separate
 Inno Setup x64 and ARM64 installers. Before distributing it to end users:
 
-- complete the Windows CI tests for x64 and builds for x64 and ARM64;
+- complete the Windows release tests for x64 and builds for x64 and ARM64;
 - complete the ARM64 device checklist in `Windows/README.md`;
 - test create, open, encrypted interoperability, extraction, file association,
   and Explorer thumbnails on supported Windows versions;

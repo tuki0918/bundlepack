@@ -58,16 +58,18 @@ The application code and platform-specific documentation are kept together.
 
 Pull requests and pushes to `main` are checked on both operating systems by
 GitHub Actions. Windows opens the checked-in macOS fixtures and creates Windows
-fixtures; macOS then opens those Windows-generated files. Successful pushes to
-`main` provide test applications for macOS universal, Windows x64, Windows
-ARM64, and Windows x64/ARM64 installers for seven days. Pull requests also
-receive dependency review, and CodeQL analyzes the native C# and Swift sources.
+fixtures; macOS then opens those Windows-generated files. Pull requests run
+these lightweight tests and dependency review. Pushes to `main` additionally
+run C# and Swift CodeQL; those analysis builds also compile the Windows x64 and
+macOS universal applications. CI does not retain application or installer
+artifacts.
 
 Pushing a `v<version>` tag that matches the synchronized project version and
-points to a commit on the default branch runs the native checks and creates or
-updates a GitHub prerelease. The release gate also opens Windows-generated
-fixtures on macOS. Versioned applications, installers, SHA-256 checksums, and
-GitHub build-provenance attestations remain available with the release.
+points to a commit on the default branch runs the full native builds and
+installer checks, then creates or updates a GitHub prerelease. The release gate
+also opens Windows-generated fixtures on macOS. CodeQL is limited to pushes to
+`main`. Versioned applications, installers, SHA-256 checksums, and GitHub
+build-provenance attestations remain available with the release.
 
 See [Docs/RELEASE.md](Docs/RELEASE.md) before publishing source or binaries.
 Automated applications are ad-hoc signed or unsigned test builds, not trusted

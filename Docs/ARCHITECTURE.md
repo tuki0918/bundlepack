@@ -67,36 +67,33 @@ consistent across its native project, command-line build, and packaging files.
 
 ## Compatibility gates
 
-The macOS and Windows native test-and-build jobs run independently. A dedicated
-compatibility job runs after both succeed. Together, the jobs perform the
-following checks:
+Normal CI keeps pull requests and pushes to `main` lightweight. Windows runs
+first and passes its generated fixtures to the single macOS job:
 
-1. macOS opens the checked-in macOS fixtures and builds the universal app.
-2. Windows opens the checked-in macOS fixtures and creates unencrypted,
-   encrypted, and Unicode-password Windows fixtures.
-3. The compatibility job downloads and opens the Windows fixtures on macOS.
-4. Windows registers the built app for `.bundlepack`, verifies the shell values,
-   and removes the temporary per-user registration.
-5. Windows renders macOS- and Windows-created packages through the thumbnail
-   provider and builds the provider for x64 and ARM64.
-6. A separate Windows job builds x64 and ARM64 Setup executables, installs and
-   uninstalls x64, and verifies file-association and thumbnail registry cleanup.
+1. macOS runs its smoke tests and opens the checked-in macOS fixtures.
+2. Windows runs the core tests, opens the checked-in macOS fixtures, and creates
+   unencrypted, encrypted, and Unicode-password Windows fixtures.
+3. The macOS job downloads and opens the Windows fixtures before running the
+   rest of its smoke suite.
 
 Each platform also creates an encrypted Unicode-password fixture and opens the
 other platform's fixture with a canonically equivalent password in the opposite
 Unicode composition form.
 
-Pull requests also receive dependency review. CodeQL builds and analyzes the
-C# and Swift applications independently on their native runners.
+Pull requests also receive dependency review. A push to `main` additionally
+runs CodeQL for C# and Swift; the manual CodeQL builds double as x64 Windows and
+universal macOS application compile checks. No application or installer
+artifacts are retained. Generated Windows compatibility fixtures expire after
+one day.
 
-The CI workflow runs for pull requests and pushes to `main`. Cross-job Windows
-applications and compatibility fixtures expire after one day; downloadable
-testing applications from successful `main` builds expire after seven days. A
-separate `v<version>` tag workflow repeats the native release checks and copies
-versioned assets into a GitHub prerelease, where they remain until the release
-is deleted. It rejects tags outside the default branch, repeats the
-Windows-to-macOS compatibility gate, and records GitHub provenance attestations
-for the published ZIP and EXE files.
+The `v<version>` tag workflow performs the full release gate. It builds and
+tests the macOS universal app, Windows x64/ARM64 apps and thumbnail providers,
+builds both Setup executables, installs and uninstalls the x64 installer, and
+rejects tags outside the default branch. It also repeats the Windows-to-macOS
+compatibility gate, publishes versioned assets to a GitHub prerelease, and
+records GitHub provenance attestations for the ZIP and EXE files. CodeQL is not
+repeated for release tags because the release commit must already belong to
+`main`.
 
 Format changes must update `Docs/FORMAT.md`, both native implementations, the
 fixture generators, and the bidirectional tests in the same pull request. A new
