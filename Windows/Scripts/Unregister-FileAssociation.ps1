@@ -16,6 +16,7 @@ $progId = "BundlePack.Archive.1"
 $progIdPath = "$classesRoot\$progId"
 $applicationPath = "$classesRoot\Applications\$ExecutableName"
 $extensionOpenWithPath = "$classesRoot\.bundlepack\OpenWithProgids"
+$bundlePackRegistryPath = "HKCU:\Software\BundlePack"
 $capabilitiesPath = "HKCU:\Software\BundlePack\Capabilities"
 $registeredApplicationsPath = "HKCU:\Software\RegisteredApplications"
 $thumbnailClassId = "{645A25AB-1F31-4147-A47B-46E8515BF79D}"
@@ -110,6 +111,22 @@ if (-not [string]::IsNullOrWhiteSpace($ownedThumbnailProvider)) {
     }
 }
 Remove-Item -LiteralPath $registrationPath -Recurse -Force
+
+if (Test-Path -LiteralPath $bundlePackRegistryPath) {
+    $bundlePackRegistryKey = Get-Item -LiteralPath $bundlePackRegistryPath
+    try {
+        $bundlePackRegistryIsEmpty = (
+            $bundlePackRegistryKey.SubKeyCount -eq 0 -and
+            $bundlePackRegistryKey.ValueCount -eq 0
+        )
+    }
+    finally {
+        $bundlePackRegistryKey.Dispose()
+    }
+    if ($bundlePackRegistryIsEmpty) {
+        Remove-Item -LiteralPath $bundlePackRegistryPath -Force
+    }
+}
 
 if (-not ([System.Management.Automation.PSTypeName]"BundlePack.NativeShell").Type) {
     Add-Type -TypeDefinition @"

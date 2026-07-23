@@ -21,6 +21,7 @@ $progId = "BundlePack.Archive.1"
 $progIdPath = "$classesRoot\$progId"
 $applicationPath = "$classesRoot\Applications\$executableName"
 $openWithPath = "$classesRoot\.bundlepack\OpenWithProgids"
+$bundlePackRegistryPath = "HKCU:\Software\BundlePack"
 $capabilitiesPath = "HKCU:\Software\BundlePack\Capabilities"
 $registeredApplicationsPath = "HKCU:\Software\RegisteredApplications"
 $thumbnailClassId = "{645A25AB-1F31-4147-A47B-46E8515BF79D}"
@@ -155,6 +156,9 @@ if (Test-Path -LiteralPath $thumbnailHandlerPath) {
 }
 if (Test-Path -LiteralPath $registrationPath) {
     throw "The registration ownership marker was not removed."
+}
+if (Test-Path -LiteralPath $bundlePackRegistryPath) {
+    throw "The empty BundlePack registry key was not removed."
 }
 Assert-RegistryValueAbsent -Path $openWithPath -Name $progId
 Assert-RegistryValueAbsent -Path $registeredApplicationsPath -Name "BundlePack"
