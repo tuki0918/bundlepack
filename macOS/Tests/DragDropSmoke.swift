@@ -16,9 +16,14 @@ enum DragDropSmoke {
         let file = root.appendingPathComponent("sample.txt")
         let archive = root.appendingPathComponent("Drop-Test.bundlepack")
         let icon = URL(fileURLWithPath: CommandLine.arguments[1])
+        let animation = root.appendingPathComponent("animated-icon.gif")
+        let animationData = Data(base64Encoded:
+            "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAEALAAAAAABAAEAAAICRAEAIfkEAQAAAQAsAAAAAAEAAQAAAgJEAAA7"
+        )!
 
         try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
         try Data("Drag and drop test\n".utf8).write(to: file)
+        try animationData.write(to: animation)
         defer { try? fileManager.removeItem(at: root) }
 
         let request = PackageCreationRequest(
@@ -71,6 +76,21 @@ enum DragDropSmoke {
             model.iconURL?.standardizedFileURL == icon.standardizedFileURL
         }
 
+        guard let animationProvider = NSItemProvider(contentsOf: animation) else {
+            throw TestError("The animated icon file URL provider could not be created.")
+        }
+        guard model.useDroppedIcon([animationProvider]) else {
+            throw TestError("The animated icon drop was not accepted.")
+        }
+        try await waitUntil {
+            model.iconURL?.standardizedFileURL == animation.standardizedFileURL
+                && model.iconAnimationData == animationData
+        }
+        model.selectIcon(nil)
+        guard model.iconURL == nil, model.iconAnimationData == nil else {
+            throw TestError("Removing the animated icon did not clear its preview data.")
+        }
+
         guard let archiveProvider = NSItemProvider(contentsOf: archive) else {
             throw TestError("The archive file URL provider could not be created.")
         }
@@ -87,7 +107,7 @@ enum DragDropSmoke {
             throw TestError("The dropped package was not opened correctly.")
         }
 
-        print("PASS: Finder icon metadata preserved package data; Create and Open drag-and-drop succeeded")
+        print("PASS: Finder icon metadata preserved package data; animated Create and Open drag-and-drop succeeded")
     }
 
     @MainActor

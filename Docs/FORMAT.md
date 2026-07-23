@@ -45,11 +45,12 @@ fields may be empty.
 The icon is normalized to a transparent 1024 × 1024 PNG. It is public in both
 package formats and remains the only image used by Finder, Quick Look, and
 Explorer. When the selected source is an animated GIF, its first frame is used
-to create `icon.png`; the original GIF is stored as `animation.gif` and is
-played only on BundlePack's validated Open screen. For encrypted packages this
-means playback begins only after successful unlock. Animated WebP is not
-supported. Playback may remain static when the operating system's animation or
-reduced-motion setting is disabled.
+to create `icon.png`; the original GIF is stored as `animation.gif`. A validated
+source GIF may play in BundlePack's Create preview, and the stored GIF plays on
+the validated Open screen. For encrypted packages, Open playback begins only
+after successful unlock. Animated WebP is not supported. Playback may remain
+static when the operating system's animation or reduced-motion setting is
+disabled.
 
 ## Platform interoperability
 

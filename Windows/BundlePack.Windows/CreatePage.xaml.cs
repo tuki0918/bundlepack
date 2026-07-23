@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Input;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.UI.ViewManagement;
 
 namespace BundlePack.Windows;
 
@@ -127,7 +128,14 @@ public sealed partial class CreatePage : UserControl
             BundlePackIcon.ValidatePng(data);
             _selectedIconPng = data;
             _selectedAnimationGif = animation;
-            await ImageHelpers.SetPngAsync(IconPreview, data);
+            if (animation is not null && new UISettings().AnimationsEnabled)
+            {
+                await ImageHelpers.SetImageAsync(IconPreview, animation, autoPlay: true);
+            }
+            else
+            {
+                await ImageHelpers.SetPngAsync(IconPreview, data);
+            }
             RemoveIconButton.Visibility = Visibility.Visible;
         }
         catch (Exception exception)

@@ -66,7 +66,7 @@ extension AppModel {
         panel.canChooseDirectories = false
         panel.allowedContentTypes = [.png, .jpeg, .tiff, .heic, .svg, .gif]
         guard panel.runModal() == .OK else { return }
-        iconURL = panel.url
+        selectIcon(panel.url)
     }
 
     func useDroppedIcon(_ providers: [NSItemProvider]) -> Bool {
@@ -86,11 +86,16 @@ extension AppModel {
                     self.errorMessage = "Drop a PNG, JPEG, TIFF, HEIC, SVG, or GIF image."
                     return
                 }
-                self.iconURL = url
+                self.selectIcon(url)
                 self.errorMessage = nil
             }
         }
         return true
+    }
+
+    func selectIcon(_ url: URL?) {
+        iconURL = url
+        iconAnimationData = try? PackageBuilder.validatedAnimationGIF(from: url)
     }
 
     func removeInput(_ url: URL) {

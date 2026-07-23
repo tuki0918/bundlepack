@@ -267,7 +267,10 @@ struct CreatePackageView: View {
     private var iconPicker: some View {
         VStack(spacing: 10) {
             ZStack(alignment: .topTrailing) {
-                PackageIconView(image: selectedIconImage)
+                PackageIconView(
+                    image: selectedIconImage,
+                    animationData: model.iconAnimationData
+                )
                     .overlay {
                         if isIconDropTargeted {
                             IconDropTargetOverlay()
@@ -281,7 +284,7 @@ struct CreatePackageView: View {
 
                 if model.iconURL != nil {
                     Button {
-                        model.iconURL = nil
+                        model.selectIcon(nil)
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 10, weight: .bold))

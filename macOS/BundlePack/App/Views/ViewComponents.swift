@@ -20,6 +20,7 @@ struct PackageIconView: View {
         Group {
             if let animationData {
                 AnimatedPackageIconView(data: animationData)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let image {
                 Image(nsImage: image)
                     .resizable()
@@ -47,6 +48,12 @@ struct PackageIconView: View {
 private struct AnimatedPackageIconView: NSViewRepresentable {
     let data: Data
 
+    private final class FittingImageView: NSImageView {
+        override var intrinsicContentSize: NSSize {
+            NSSize(width: NSView.noIntrinsicMetric, height: NSView.noIntrinsicMetric)
+        }
+    }
+
     final class Coordinator {
         var displayedData: Data?
     }
@@ -54,9 +61,11 @@ private struct AnimatedPackageIconView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSImageView {
-        let view = NSImageView()
+        let view = FittingImageView()
         view.imageAlignment = .alignCenter
         view.imageScaling = .scaleProportionallyUpOrDown
+        view.wantsLayer = true
+        view.layer?.masksToBounds = true
         view.image = NSImage(data: data)
         view.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         context.coordinator.displayedData = data
@@ -69,6 +78,15 @@ private struct AnimatedPackageIconView: NSViewRepresentable {
             context.coordinator.displayedData = data
         }
         nsView.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+
+    func sizeThatFits(
+        _ proposal: ProposedViewSize,
+        nsView: NSImageView,
+        context: Context
+    ) -> CGSize? {
+        guard let width = proposal.width, let height = proposal.height else { return nil }
+        return CGSize(width: width, height: height)
     }
 }
 

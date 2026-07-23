@@ -102,9 +102,9 @@ incompatible layout requires a new container or manifest version.
 Static packages retain manifest version 1. Selecting an animated GIF writes a
 version 2 manifest and stores `animation.gif` inside the ZIP. The public
 `icon.png` contract and encrypted-container version remain unchanged, so Finder,
-Quick Look, and Explorer continue to use a bounded static image. Only the app's
-validated Open view consumes animation bytes; encrypted animation bytes are not
-available until unlock.
+Quick Look, and Explorer continue to use a bounded static image. Create previews
+consume validated source GIF bytes. The validated Open view consumes stored
+animation bytes; encrypted animation bytes are not available until unlock.
 
 ## Security boundaries
 

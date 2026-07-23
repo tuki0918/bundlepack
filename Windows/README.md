@@ -141,10 +141,11 @@ The Windows app supports PNG, JPEG, BMP, TIFF, and animated GIF source images.
 It preserves the source aspect ratio, centers the image on a transparent
 canvas, and stores it as a 1024 × 1024 `icon.png`.
 
-For a GIF, the first frame becomes the public `icon.png`; the animation plays
-only on BundlePack's validated Open screen and, for encrypted packages, only
-after unlock. Explorer remains static, and the Windows animation accessibility
-setting is respected. Animated WebP is not currently supported.
+For a GIF, the first frame becomes the public `icon.png`; the validated
+animation plays in the Create preview and on BundlePack's validated Open screen.
+For encrypted packages, Open playback begins only after unlock. Explorer
+remains static, and the Windows animation accessibility setting is respected.
+Animated WebP is not currently supported.
 
 The package icon is always public, including in encrypted packages, because
 Explorer must read it without a password. Do not use an image that contains

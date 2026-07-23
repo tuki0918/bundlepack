@@ -23,6 +23,7 @@ final class AppModel: ObservableObject {
     @Published var summary = ""
     @Published var inputURLs: [URL] = []
     @Published var iconURL: URL?
+    @Published var iconAnimationData: Data?
     @Published var encryptionEnabled = true
     @Published var encryptionPassword = ""
     @Published var encryptionPasswordConfirmation = ""
