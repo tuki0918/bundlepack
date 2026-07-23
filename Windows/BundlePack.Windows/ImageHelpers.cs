@@ -1,3 +1,4 @@
+using BundlePack.Core;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Graphics.Imaging;
