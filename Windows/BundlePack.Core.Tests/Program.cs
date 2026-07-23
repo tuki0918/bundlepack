@@ -78,6 +78,80 @@ try
         !Directory.EnumerateFiles(temporaryRoot, ".windows-unencrypted.bundlepack.*.tmp").Any(),
         "A temporary unencrypted package was not removed.");
 
+    var animationGif = Convert.FromBase64String(
+        "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAEALAAAAAABAAEAAAICRAEAIfkEAQAAAQAsAAAAAAEAAQAAAgJEAAA7");
+    BundlePackAnimation.ValidateGif(animationGif);
+    var animatedPath = Path.Combine(temporaryRoot, "windows-animated.bundlepack");
+    using (var animated = await BundlePackService.CreateAsync(new PackageCreationRequest(
+        "Windows Animated",
+        "2.0",
+        string.Empty,
+        string.Empty,
+        [helloPath],
+        iconPng,
+        EncryptionEnabled: false,
+        Password: string.Empty,
+        DestinationPath: animatedPath,
+        AnimationGif: animationGif)))
+    {
+        var animatedArchive = animated.Archive
+            ?? throw new InvalidOperationException("The animated package did not reopen.");
+        Require(
+            animatedArchive.Manifest.FormatVersion == BundlePackConstants.AnimatedFormatVersion,
+            "The animated package did not use manifest version 2.");
+        Require(
+            animatedArchive.AnimationGif?.SequenceEqual(animationGif) == true,
+            "The animated GIF was not preserved.");
+        BundlePackIcon.ValidatePng(animatedArchive.IconPng);
+    }
+
+    var encryptedAnimatedPath = Path.Combine(temporaryRoot, "windows-animated-encrypted.bundlepack");
+    using (var lockedAnimated = await BundlePackService.CreateAsync(new PackageCreationRequest(
+        "Windows Encrypted Animated",
+        "2.0",
+        string.Empty,
+        string.Empty,
+        [helloPath],
+        iconPng,
+        EncryptionEnabled: true,
+        Password: password,
+        DestinationPath: encryptedAnimatedPath,
+        AnimationGif: animationGif)))
+    {
+        Require(
+            lockedAnimated.Archive is null,
+            "The encrypted animation was exposed before unlock.");
+    }
+    Require(
+        (await File.ReadAllBytesAsync(encryptedAnimatedPath)).AsSpan().IndexOf("animation.gif"u8) < 0,
+        "The encrypted package exposed its animation entry before unlock.");
+    using (var unlockedAnimated = await BundlePackService.OpenAsync(encryptedAnimatedPath, password))
+    {
+        Require(
+            unlockedAnimated.Archive?.AnimationGif?.SequenceEqual(animationGif) == true,
+            "The encrypted GIF was not available after unlock.");
+    }
+
+    try
+    {
+        using var ignored = await BundlePackService.CreateAsync(new PackageCreationRequest(
+            "Invalid Animation",
+            "2.0",
+            string.Empty,
+            string.Empty,
+            [helloPath],
+            iconPng,
+            EncryptionEnabled: false,
+            Password: string.Empty,
+            DestinationPath: Path.Combine(temporaryRoot, "invalid-animation.bundlepack"),
+            AnimationGif: "GIF89a"u8.ToArray()));
+        throw new InvalidOperationException("An invalid animated GIF was accepted.");
+    }
+    catch (BundlePackException exception) when (exception.Error == BundlePackError.InvalidAnimation)
+    {
+        // Expected.
+    }
+
     var cancelledPath = Path.Combine(temporaryRoot, "cancelled.bundlepack");
     using (var cancellation = new CancellationTokenSource())
     {

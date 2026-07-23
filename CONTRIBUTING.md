@@ -21,8 +21,8 @@ The test script also verifies that macOS, the thumbnail extension, Xcode, and
 Windows share the same release version, platform minimums, and macOS build
 number. Swift source registrations are checked against the filesystem,
 command-line build, and Xcode project so newly added files cannot be silently
-omitted. Both native test suites verify their v1 constants against
-`Fixtures/FormatV1.json`.
+omitted. Both native test suites verify their v1/container constants and the
+additive v2 animation contract against `Fixtures/FormatV1.json`.
 
 The build output is written to `.build/BundlePack.app` and is ad-hoc signed for local testing.
 

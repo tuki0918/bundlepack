@@ -3,6 +3,7 @@ import Foundation
 enum PackageBuilderError: LocalizedError {
     case noInputFiles
     case invalidIcon
+    case invalidAnimation
     case symbolicLink(String)
     case unsupportedFilename(String)
     case fileTooLarge(String)
@@ -19,6 +20,8 @@ enum PackageBuilderError: LocalizedError {
             return "Choose at least one file or folder to include."
         case .invalidIcon:
             return "The selected image could not be converted to PNG."
+        case .invalidAnimation:
+            return "The selected GIF must contain 2–120 frames, use a canvas no larger than 1024 × 1024, and be 16 MB or smaller."
         case .symbolicLink(let path):
             return "Symbolic links cannot be included in a shared package: \(path)"
         case .unsupportedFilename(let name):
@@ -120,12 +123,16 @@ enum PackageBuilder {
         ) else {
             throw PackageBuilderError.invalidMetadata
         }
+        let iconSource = request.iconURL ?? request.fallbackIconURL
+        let animationData = try validatedAnimationGIF(from: request.iconURL)
+        let iconData = try normalizedPNG(from: iconSource)
         let manifest = BundlePackManifest(
             title: manifestTitle,
             packageVersion: normalizedVersion,
             author: normalizedAuthor,
             summary: normalizedSummary,
-            files: files
+            files: files,
+            animation: animationData == nil ? nil : .gif
         )
 
         let encoder = JSONEncoder()
@@ -136,9 +143,13 @@ enum PackageBuilder {
             options: [.atomic]
         )
 
-        let iconSource = request.iconURL ?? request.fallbackIconURL
-        let iconData = try normalizedPNG(from: iconSource)
         try iconData.write(to: staging.appendingPathComponent("icon.png"), options: [.atomic])
+        if let animationData {
+            try animationData.write(
+                to: staging.appendingPathComponent(BundlePackAnimationValidator.path),
+                options: [.atomic]
+            )
+        }
 
         progress?(BundlePackOperationProgress(fractionCompleted: 0.52, message: "Compressing files…"))
         try run(
@@ -146,6 +157,13 @@ enum PackageBuilder {
             arguments: ["-0", "-X", "-q", archive.path, "icon.png", "manifest.json"],
             currentDirectory: staging
         )
+        if animationData != nil {
+            try run(
+                executable: "/usr/bin/zip",
+                arguments: ["-0", "-X", "-q", archive.path, BundlePackAnimationValidator.path],
+                currentDirectory: staging
+            )
+        }
         try run(
             executable: "/usr/bin/zip",
             arguments: ["-r", "-y", "-X", "-q", archive.path, "payload"],

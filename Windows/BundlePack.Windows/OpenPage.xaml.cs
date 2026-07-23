@@ -7,6 +7,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.System;
+using Windows.UI.ViewManagement;
 
 namespace BundlePack.Windows;
 
@@ -231,7 +232,15 @@ public sealed partial class OpenPage : UserControl, IDisposable
     {
         InitialPanel.Visibility = Visibility.Collapsed;
         PackageContent.Visibility = Visibility.Visible;
-        await ImageHelpers.SetPngAsync(PackageIcon, package.IconPng);
+        if (package.Archive?.AnimationGif is { } animation
+            && new UISettings().AnimationsEnabled)
+        {
+            await ImageHelpers.SetImageAsync(PackageIcon, animation, autoPlay: true);
+        }
+        else
+        {
+            await ImageHelpers.SetPngAsync(PackageIcon, package.IconPng);
+        }
 
         Contents.Clear();
         if (package.Archive is null)

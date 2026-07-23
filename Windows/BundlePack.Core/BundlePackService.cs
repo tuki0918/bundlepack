@@ -24,6 +24,10 @@ public static partial class BundlePackService
         }
 
         BundlePackIcon.ValidatePng(request.IconPng);
+        if (request.AnimationGif is not null)
+        {
+            BundlePackAnimation.ValidateGif(request.AnimationGif);
+        }
         var normalizedTitle = string.IsNullOrWhiteSpace(request.Title) ? "Untitled Package" : request.Title.Trim();
         var normalizedVersion = request.PackageVersion.Trim();
         var normalizedAuthor = request.Author.Trim();
@@ -78,19 +82,33 @@ public static partial class BundlePackService
             var manifest = new BundlePackManifest
             {
                 Format = BundlePackConstants.FormatIdentifier,
-                FormatVersion = BundlePackConstants.FormatVersion,
+                FormatVersion = request.AnimationGif is null
+                    ? BundlePackConstants.FormatVersion
+                    : BundlePackConstants.AnimatedFormatVersion,
                 Title = normalizedTitle,
                 PackageVersion = normalizedVersion,
                 Author = normalizedAuthor,
                 Summary = normalizedSummary,
                 CreatedAt = DateTimeOffset.UtcNow,
-                Files = files
+                Files = files,
+                Animation = request.AnimationGif is null
+                    ? null
+                    : new BundlePackAnimationMetadata(
+                        BundlePackConstants.AnimationPath,
+                        BundlePackConstants.AnimationMediaType)
             };
             var manifestData = JsonSerializer.SerializeToUtf8Bytes(manifest, BundlePackJson.Options);
             await File.WriteAllBytesAsync(Path.Combine(staging, "manifest.json"), manifestData, cancellationToken)
                 .ConfigureAwait(false);
             await File.WriteAllBytesAsync(Path.Combine(staging, "icon.png"), request.IconPng, cancellationToken)
                 .ConfigureAwait(false);
+            if (request.AnimationGif is not null)
+            {
+                await File.WriteAllBytesAsync(
+                    Path.Combine(staging, BundlePackConstants.AnimationPath),
+                    request.AnimationGif,
+                    cancellationToken).ConfigureAwait(false);
+            }
             await BundlePackArchive.CreateAsync(
                 staging,
                 archivePath,

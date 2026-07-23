@@ -4,7 +4,7 @@ BundlePack `0.1.x` writes one of two formats using the `.bundlepack` extension.
 
 ## Common metadata
 
-The inner ZIP contains:
+The inner ZIP always contains:
 
 ```text
 icon.png
@@ -12,24 +12,29 @@ manifest.json
 payload/
 ```
 
-No other root entries are permitted. The ZIP must be a complete single-disk
+An animated package also contains `animation.gif` at the ZIP root. No other
+root entries are permitted. The ZIP must be a complete single-disk
 archive; an optional ZIP comment is allowed, but bytes appended beyond the
 declared comment are rejected.
 
-`manifest.json` uses format identifier `com.tuki0918.bundlepack` and format version `1`. Readers reject other identifiers and versions.
+`manifest.json` uses format identifier `com.tuki0918.bundlepack`. Static
+packages use manifest version `1`; packages with an animated GIF use manifest
+version `2`. Readers accept both layouts and reject other identifiers and
+versions.
 
 The manifest is UTF-8 JSON with these fields:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `format` | string | `com.tuki0918.bundlepack` |
-| `formatVersion` | integer | `1` |
+| `formatVersion` | integer | `1` for static packages or `2` for animated GIF packages |
 | `title` | string | Display and extraction-folder name |
 | `packageVersion` | string | User-provided package version |
 | `author` | string | Optional author text |
 | `summary` | string | Optional description text |
 | `createdAt` | string | ISO-8601 creation timestamp |
 | `files` | array | Objects containing a payload-relative `/`-separated `path` and byte `size` |
+| `animation` | object | Version 2 only: `{ "path": "animation.gif", "mediaType": "image/gif" }` |
 
 Display fields must not contain Unicode control characters. Their maximum
 UTF-8 encoded lengths are 256 bytes for `title`, 64 bytes for
@@ -37,7 +42,14 @@ UTF-8 encoded lengths are 256 bytes for `title`, 64 bytes for
 `title` must contain at least one non-whitespace character. The other display
 fields may be empty.
 
-The icon is normalized to a transparent 1024 × 1024 PNG. It is public in both package formats.
+The icon is normalized to a transparent 1024 × 1024 PNG. It is public in both
+package formats and remains the only image used by Finder, Quick Look, and
+Explorer. When the selected source is an animated GIF, its first frame is used
+to create `icon.png`; the original GIF is stored as `animation.gif` and is
+played only on BundlePack's validated Open screen. For encrypted packages this
+means playback begins only after successful unlock. Animated WebP is not
+supported. Playback may remain static when the operating system's animation or
+reduced-motion setting is disabled.
 
 ## Platform interoperability
 
@@ -46,7 +58,7 @@ The format is platform-neutral. The native macOS implementation uses Swift, Cryp
 - write UTF-8 ZIP paths using `/` as the separator;
 - normalize passwords to Unicode NFC before UTF-8 PBKDF2 input;
 - use the exact little-endian encrypted-container layout below;
-- store `icon.png` and `manifest.json` without ZIP compression;
+- store `icon.png`, `manifest.json`, and optional `animation.gif` without ZIP compression;
 - apply the same path, entry-count, size, ZIP64, compression, and symbolic-link restrictions.
 
 `Fixtures/Compatibility/macOS` contains packages created by macOS and opened by
@@ -55,14 +67,18 @@ opened by the macOS test job. Dedicated Unicode-password fixtures use opposite
 composed/decomposed forms to verify NFC normalization in both directions. The
 shared fixture passwords are test-only and documented beside the fixtures.
 
-`Fixtures/FormatV1.json` mirrors the numeric and identifier constants in this
-document so both native test suites can detect implementation drift. This
-document remains the normative format specification; the JSON file is a test
-expectation and must be updated only with an intentional format-contract change.
+`Fixtures/FormatV1.json` mirrors the version 1 and encrypted-container constants,
+plus the additive version 2 animation contract, so both native test suites can
+detect implementation drift. Version 2 behavior is also covered by both native
+end-to-end suites. This document remains the normative format specification;
+the JSON file is a test expectation and must be updated only with an intentional
+format-contract change.
 
 ## Unencrypted packages
 
-An unencrypted package is a standard ZIP archive. `icon.png` and `manifest.json` are stored without compression, while payload entries may use normal ZIP compression.
+An unencrypted package is a standard ZIP archive. `icon.png`, `manifest.json`,
+and optional `animation.gif` are stored without compression, while payload
+entries may use normal ZIP compression.
 
 Unencrypted packages provide no confidentiality. File names, metadata, and contents can be inspected with standard ZIP tools.
 
@@ -94,7 +110,9 @@ The inner ZIP is divided into 4 MiB plaintext chunks. Each chunk uses AES-256-GC
 - authenticated data: the complete fixed header followed by the 32-bit chunk index;
 - output: ciphertext followed by a 16-byte authentication tag.
 
-The public icon is authenticated by the hash in the fixed header but is intentionally not encrypted. All inner ZIP metadata, paths, and contents are encrypted.
+The public icon is authenticated by the hash in the fixed header but is
+intentionally not encrypted. All inner ZIP metadata, paths, contents, and the
+optional GIF animation are encrypted.
 
 ## Validation limits
 
@@ -106,6 +124,9 @@ Readers reject:
 - manifests whose file paths or sizes do not exactly match the ZIP payload;
 - display metadata containing control characters or exceeding the UTF-8 limits above;
 - missing or invalid package icons, including PNG dimensions other than 1024 × 1024;
+- GIF animations that are not structurally valid, contain fewer than 2 or more
+  than 120 frames, exceed 16 MiB, use a canvas dimension above 1024 pixels, or
+  exceed 100 million canvas pixels across all frames;
 - unexpected root entries, multi-disk ZIPs, incomplete central directories, and undeclared trailing data;
 - encrypted ZIP entries and unsupported compression methods;
 - entries whose actual expanded size or ZIP CRC does not match the central directory;

@@ -64,7 +64,7 @@ extension AppModel {
         panel.allowsMultipleSelection = false
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
-        panel.allowedContentTypes = [.png, .jpeg, .tiff, .heic, .svg]
+        panel.allowedContentTypes = [.png, .jpeg, .tiff, .heic, .svg, .gif]
         guard panel.runModal() == .OK else { return }
         iconURL = panel.url
     }
@@ -83,7 +83,7 @@ extension AppModel {
                 guard let image = NSImage(contentsOf: url),
                       image.size.width > 0,
                       image.size.height > 0 else {
-                    self.errorMessage = "Drop a PNG, JPEG, TIFF, HEIC, or SVG image."
+                    self.errorMessage = "Drop a PNG, JPEG, TIFF, HEIC, SVG, or GIF image."
                     return
                 }
                 self.iconURL = url

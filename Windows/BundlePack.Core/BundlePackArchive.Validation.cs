@@ -267,7 +267,7 @@ public static partial class BundlePackArchive
     }
 
     private static bool IsAllowedBundlePackPath(string path) =>
-        path is "icon.png" or "manifest.json" or "payload/"
+        path is "icon.png" or "manifest.json" or BundlePackConstants.AnimationPath or "payload/"
         || path.StartsWith("payload/", StringComparison.Ordinal);
 
     private static string CanonicalOutputPath(string path)

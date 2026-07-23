@@ -12,6 +12,7 @@ enum BundlePackArchiveError: LocalizedError {
     case duplicateEntry(String)
     case missingMetadata(String)
     case invalidIcon
+    case invalidAnimation
     case invalidManifest
     case unsupportedFormat
     case archiveTooLarge
@@ -38,6 +39,8 @@ enum BundlePackArchiveError: LocalizedError {
             return "Required metadata is missing: \(name)"
         case .invalidIcon:
             return "The package icon must be a 1024 × 1024 PNG image."
+        case .invalidAnimation:
+            return "The package animation must be a valid animated GIF within the safety limits."
         case .invalidManifest:
             return "manifest.json is invalid or does not match the package contents."
         case .unsupportedFormat:
@@ -70,6 +73,7 @@ struct ZipArchiveInspector {
         guard let iconEntry = entries.first(where: { $0.path == "icon.png" }) else {
             throw BundlePackArchiveError.missingMetadata("icon.png")
         }
+        let animationEntry = entries.first(where: { $0.path == BundlePackAnimationValidator.path })
 
         let manifestData = try storedData(for: manifestEntry, in: data)
         let iconData = try storedData(for: iconEntry, in: data)
@@ -82,12 +86,29 @@ struct ZipArchiveInspector {
         guard let manifest = try? decoder.decode(BundlePackManifest.self, from: manifestData) else {
             throw BundlePackArchiveError.invalidManifest
         }
-        guard manifest.format == BundlePackManifest.formatIdentifier,
-              manifest.formatVersion == BundlePackManifest.currentFormatVersion else {
+        guard manifest.format == BundlePackManifest.formatIdentifier else {
             throw BundlePackArchiveError.unsupportedFormat
+        }
+        guard manifest.formatVersion == BundlePackManifest.staticFormatVersion
+                || manifest.formatVersion == BundlePackManifest.animatedFormatVersion else {
+            throw BundlePackArchiveError.unsupportedFormat
+        }
+        guard manifest.hasValidAnimationLayout(hasAnimationEntry: animationEntry != nil) else {
+            throw BundlePackArchiveError.invalidManifest
         }
         guard manifest.hasValidDisplayMetadata else {
             throw BundlePackArchiveError.invalidManifest
+        }
+
+        let animationData: Data?
+        if let animationEntry {
+            let data = try storedData(for: animationEntry, in: data)
+            guard BundlePackAnimationValidator.isValidGIF(data) else {
+                throw BundlePackArchiveError.invalidAnimation
+            }
+            animationData = data
+        } else {
+            animationData = nil
         }
 
         let payloadFiles = entries
@@ -126,6 +147,7 @@ struct ZipArchiveInspector {
             url: url,
             manifest: manifest,
             iconData: iconData,
+            animationData: animationData,
             payloadFiles: payloadFiles,
             archiveSize: UInt64(data.count),
             expandedSize: entries.reduce(0) { $0 + $1.uncompressedSize },

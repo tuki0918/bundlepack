@@ -161,6 +161,96 @@ enum EndToEndSmoke {
         }
         try require(leftoverPlainArchives.isEmpty, "A temporary unencrypted package was not removed.")
 
+        let animationData = Data(base64Encoded:
+            "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAEALAAAAAABAAEAAAICRAEAIfkEAQAAAQAsAAAAAAEAAQAAAgJEAAA7"
+        )!
+        let animationURL = root.appendingPathComponent("animated-icon.gif")
+        try animationData.write(to: animationURL)
+        let animatedArchive = root.appendingPathComponent("Animated.bundlepack")
+        let animatedRequest = PackageCreationRequest(
+            title: "Animated Demo",
+            packageVersion: "2.0",
+            author: "",
+            summary: "",
+            inputURLs: [input.appendingPathComponent("hello.txt")],
+            iconURL: animationURL,
+            fallbackIconURL: icon,
+            encryptionEnabled: false,
+            password: "",
+            destinationURL: animatedArchive
+        )
+        guard case .unencrypted(let animatedInfo) = try PackageBuilder.create(animatedRequest) else {
+            throw TestError("The animated package was not created.")
+        }
+        try require(
+            animatedInfo.manifest.formatVersion == BundlePackManifest.animatedFormatVersion,
+            "The animated package did not use manifest version 2."
+        )
+        try require(animatedInfo.animationData == animationData, "The GIF animation was not preserved.")
+        try require(
+            BundlePackIconValidator.isValidPNG(animatedInfo.iconData),
+            "The animated package did not retain a static PNG thumbnail."
+        )
+        let animatedThumbnail = try ZipArchiveInspector.embeddedIcon(in: animatedArchive)
+        try require(
+            animatedThumbnail == animatedInfo.iconData,
+            "The animated package changed the lightweight static thumbnail path."
+        )
+
+        let encryptedAnimatedArchive = root.appendingPathComponent("Animated-Encrypted.bundlepack")
+        let encryptedAnimatedRequest = PackageCreationRequest(
+            title: "Encrypted Animated Demo",
+            packageVersion: "2.0",
+            author: "",
+            summary: "",
+            inputURLs: [input.appendingPathComponent("hello.txt")],
+            iconURL: animationURL,
+            fallbackIconURL: icon,
+            encryptionEnabled: true,
+            password: password,
+            destinationURL: encryptedAnimatedArchive
+        )
+        guard case .encrypted = try PackageBuilder.create(encryptedAnimatedRequest) else {
+            throw TestError("The encrypted animated package was not created.")
+        }
+        let encryptedAnimatedBytes = try Data(contentsOf: encryptedAnimatedArchive)
+        try require(
+            encryptedAnimatedBytes.range(of: Data(BundlePackAnimationValidator.path.utf8)) == nil,
+            "The encrypted package exposed its animation entry before unlock."
+        )
+        let decryptedAnimatedArchive = root.appendingPathComponent("animated-decrypted.zip")
+        try BundlePackEncryptedContainer.open(
+            encryptedAnimatedArchive,
+            password: password,
+            to: decryptedAnimatedArchive
+        )
+        let decryptedAnimatedInfo = try ZipArchiveInspector.inspect(decryptedAnimatedArchive)
+        try require(
+            decryptedAnimatedInfo.animationData == animationData,
+            "The encrypted GIF was not available after unlock."
+        )
+
+        let invalidAnimationURL = root.appendingPathComponent("invalid.gif")
+        try Data("GIF89a".utf8).write(to: invalidAnimationURL)
+        let invalidAnimationRequest = PackageCreationRequest(
+            title: "Invalid Animation",
+            packageVersion: "2.0",
+            author: "",
+            summary: "",
+            inputURLs: [input.appendingPathComponent("hello.txt")],
+            iconURL: invalidAnimationURL,
+            fallbackIconURL: icon,
+            encryptionEnabled: false,
+            password: "",
+            destinationURL: root.appendingPathComponent("Invalid-Animation.bundlepack")
+        )
+        do {
+            _ = try PackageBuilder.create(invalidAnimationRequest)
+            throw TestError("An invalid animated GIF was accepted.")
+        } catch PackageBuilderError.invalidAnimation {
+            // Expected.
+        }
+
         try runArchiveValidationScenarios(
             root: root,
             plainArchive: plainArchive,

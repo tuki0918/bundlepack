@@ -118,7 +118,10 @@ struct OpenPackageView: View {
     private func archiveDetail(_ archive: BundlePackArchiveInfo) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 22) {
-                PackageIconView(image: NSImage(data: archive.iconData))
+                PackageIconView(
+                    image: NSImage(data: archive.iconData),
+                    animationData: archive.animationData
+                )
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text(archive.manifest.title)

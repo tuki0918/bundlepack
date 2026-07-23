@@ -9,10 +9,18 @@ private enum PackageIconMetrics {
 
 struct PackageIconView: View {
     let image: NSImage?
+    let animationData: Data?
+
+    init(image: NSImage?, animationData: Data? = nil) {
+        self.image = image
+        self.animationData = animationData
+    }
 
     var body: some View {
         Group {
-            if let image {
+            if let animationData {
+                AnimatedPackageIconView(data: animationData)
+            } else if let image {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
@@ -33,6 +41,34 @@ struct PackageIconView: View {
                 .stroke(.quaternary, lineWidth: 1)
         )
         .accessibilityLabel("Package icon")
+    }
+}
+
+private struct AnimatedPackageIconView: NSViewRepresentable {
+    let data: Data
+
+    final class Coordinator {
+        var displayedData: Data?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> NSImageView {
+        let view = NSImageView()
+        view.imageAlignment = .alignCenter
+        view.imageScaling = .scaleProportionallyUpOrDown
+        view.image = NSImage(data: data)
+        view.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        context.coordinator.displayedData = data
+        return view
+    }
+
+    func updateNSView(_ nsView: NSImageView, context: Context) {
+        if context.coordinator.displayedData != data {
+            nsView.image = NSImage(data: data)
+            context.coordinator.displayedData = data
+        }
+        nsView.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
     }
 }
 

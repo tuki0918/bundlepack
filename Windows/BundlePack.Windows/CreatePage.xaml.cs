@@ -13,6 +13,7 @@ public sealed partial class CreatePage : UserControl
 {
     private byte[]? _defaultIconPng;
     private byte[]? _selectedIconPng;
+    private byte[]? _selectedAnimationGif;
     private CancellationTokenSource? _operationCancellation;
 
     public CreatePage()
@@ -56,7 +57,7 @@ public sealed partial class CreatePage : UserControl
             SuggestedStartLocation = PickerLocationId.PicturesLibrary,
             ViewMode = PickerViewMode.Thumbnail
         };
-        foreach (var extension in new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff" })
+        foreach (var extension in new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".gif" })
         {
             picker.FileTypeFilter.Add(extension);
         }
@@ -85,7 +86,7 @@ public sealed partial class CreatePage : UserControl
             return;
         }
 
-        await ShowErrorAsync("Drop one PNG, JPEG, BMP, or TIFF image to use it as the package icon.");
+        await ShowErrorAsync("Drop one PNG, JPEG, BMP, TIFF, or GIF image to use it as the package icon.");
     }
 
     private void Icon_DragEnter(object sender, DragEventArgs e)
@@ -121,9 +122,11 @@ public sealed partial class CreatePage : UserControl
     {
         try
         {
+            var animation = await ImageHelpers.ReadAnimationGifAsync(path);
             var data = await ImageHelpers.NormalizePackageIconAsync(path);
             BundlePackIcon.ValidatePng(data);
             _selectedIconPng = data;
+            _selectedAnimationGif = animation;
             await ImageHelpers.SetPngAsync(IconPreview, data);
             RemoveIconButton.Visibility = Visibility.Visible;
         }
@@ -136,6 +139,7 @@ public sealed partial class CreatePage : UserControl
     private async void RemoveIcon_Click(object sender, RoutedEventArgs e)
     {
         _selectedIconPng = null;
+        _selectedAnimationGif = null;
         RemoveIconButton.Visibility = Visibility.Collapsed;
         if (_defaultIconPng is not null)
         {
@@ -356,7 +360,8 @@ public sealed partial class CreatePage : UserControl
                 _selectedIconPng ?? _defaultIconPng,
                 encrypted,
                 encrypted ? PasswordBox.Password : string.Empty,
-                destination.Path),
+                destination.Path,
+                AnimationGif: _selectedAnimationGif),
                 cancellation.Token,
                 progress);
             PasswordBox.Password = string.Empty;

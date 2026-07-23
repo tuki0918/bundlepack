@@ -322,6 +322,33 @@ extension PackageBuilder {
         return png
     }
 
+    static func validatedAnimationGIF(from url: URL?) throws -> Data? {
+        guard let url else { return nil }
+        guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
+              values.isRegularFile == true,
+              let sourceBytes = values.fileSize,
+              sourceBytes > 0 else {
+            throw PackageBuilderError.invalidIcon
+        }
+
+        let hasGIFExtension = url.pathExtension.caseInsensitiveCompare("gif") == .orderedSame
+        guard let handle = try? FileHandle(forReadingFrom: url) else {
+            throw PackageBuilderError.invalidIcon
+        }
+        defer { try? handle.close() }
+        let header = try handle.read(upToCount: 6) ?? Data()
+        let hasGIFHeader = BundlePackAnimationValidator.isGIF(header)
+        guard hasGIFExtension || hasGIFHeader else { return nil }
+        guard sourceBytes <= BundlePackAnimationValidator.maximumSize else {
+            throw PackageBuilderError.invalidAnimation
+        }
+        let data = try Data(contentsOf: url, options: [.mappedIfSafe])
+        guard BundlePackAnimationValidator.isValidGIF(data) else {
+            throw PackageBuilderError.invalidAnimation
+        }
+        return data
+    }
+
     static func run(executable: String, arguments: [String], currentDirectory: URL?) throws {
         try Task.checkCancellation()
         let process = Process()

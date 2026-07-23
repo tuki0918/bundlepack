@@ -10,6 +10,7 @@ ZIP-compatible archives.
 ## Highlights
 
 - Give each package a custom thumbnail that appears in Finder and Windows Explorer.
+- Use an animated GIF icon that plays on the validated Open screen while system thumbnails stay static.
 - Add multiple files and folders with a file picker or drag and drop.
 - Encrypt file names, metadata, ZIP structure, and file contents with AES-256-GCM.
 - Create unencrypted `.bundlepack` files that remain compatible with standard ZIP tools.
@@ -93,6 +94,7 @@ Sample.bundlepack
     └── inner.zip
         ├── icon.png
         ├── manifest.json
+        ├── animation.gif (optional)
         └── payload/
 ```
 
@@ -104,6 +106,12 @@ been modified.
 The public icon is intentionally not encrypted because Finder and Explorer need
 it for thumbnails. Use the default icon if a custom image could reveal private
 information.
+
+Animated GIFs keep a static PNG first-frame thumbnail for Finder, Quick Look,
+and Explorer. BundlePack plays the GIF only after the inner archive has been
+validated; encrypted packages therefore remain static until they are unlocked.
+Playback respects the system's reduced-motion/animation setting. Animated WebP
+is currently out of scope.
 
 ### Unencrypted
 

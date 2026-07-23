@@ -1,6 +1,14 @@
 {
   "formatIdentifier": "com.tuki0918.bundlepack",
   "manifestVersion": 1,
+  "animation": {
+    "manifestVersion": 2,
+    "path": "animation.gif",
+    "mediaType": "image/gif",
+    "maximumCanvasDimension": 1024,
+    "maximumFrames": 120,
+    "maximumTotalPixels": 100000000
+  },
   "minimumPasswordCharacters": 12,
   "container": {
     "magic": "BPKENC01",

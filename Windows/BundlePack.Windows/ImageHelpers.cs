@@ -14,7 +14,7 @@ internal static class ImageHelpers
     private const ulong MaximumSourcePixels = 100_000_000;
     private static readonly HashSet<string> SupportedPackageIconExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
-        ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"
+        ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".gif"
     };
 
     public static bool IsSupportedPackageIconPath(string path) =>
@@ -109,7 +109,44 @@ internal static class ImageHelpers
         return result;
     }
 
-    public static async Task SetPngAsync(Image image, byte[] data)
+    public static async Task<byte[]?> ReadAnimationGifAsync(string path)
+    {
+        var fullPath = Path.GetFullPath(path);
+        var hasGifExtension = string.Equals(
+            Path.GetExtension(fullPath),
+            ".gif",
+            StringComparison.OrdinalIgnoreCase);
+        var header = new byte[6];
+        await using (var stream = new FileStream(
+            fullPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            bufferSize: 6,
+            options: FileOptions.Asynchronous | FileOptions.SequentialScan))
+        {
+            var read = await stream.ReadAsync(header);
+            if (!hasGifExtension && (read < header.Length || !BundlePackAnimation.IsGif(header)))
+            {
+                return null;
+            }
+        }
+
+        var length = new FileInfo(fullPath).Length;
+        if (length <= 0 || length > BundlePackConstants.MaximumMetadataSize)
+        {
+            throw new InvalidDataException("The animated GIF must be 16 MB or smaller.");
+        }
+
+        var data = await File.ReadAllBytesAsync(fullPath);
+        BundlePackAnimation.ValidateGif(data);
+        return data;
+    }
+
+    public static Task SetPngAsync(Image image, byte[] data) =>
+        SetImageAsync(image, data, autoPlay: false);
+
+    public static async Task SetImageAsync(Image image, byte[] data, bool autoPlay)
     {
         using var stream = new InMemoryRandomAccessStream();
         using (var writer = new DataWriter(stream))
@@ -121,7 +158,7 @@ internal static class ImageHelpers
         }
 
         stream.Seek(0);
-        var bitmap = new BitmapImage();
+        var bitmap = new BitmapImage { AutoPlay = autoPlay };
         await bitmap.SetSourceAsync(stream);
         image.Source = bitmap;
     }

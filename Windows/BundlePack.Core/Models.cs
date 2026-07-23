@@ -6,6 +6,10 @@ public sealed record BundlePackFile(
     [property: JsonPropertyName("path")] string Path,
     [property: JsonPropertyName("size")] ulong Size);
 
+public sealed record BundlePackAnimationMetadata(
+    [property: JsonPropertyName("path")] string Path,
+    [property: JsonPropertyName("mediaType")] string MediaType);
+
 public sealed record BundlePackOperationProgress
 {
     public BundlePackOperationProgress(double fractionCompleted, string message)
@@ -43,6 +47,10 @@ public sealed class BundlePackManifest
 
     [JsonPropertyName("files")]
     public required IReadOnlyList<BundlePackFile> Files { get; init; }
+
+    [JsonPropertyName("animation")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public BundlePackAnimationMetadata? Animation { get; init; }
 }
 
 public sealed record PackageCreationRequest(
@@ -54,7 +62,8 @@ public sealed record PackageCreationRequest(
     byte[] IconPng,
     bool EncryptionEnabled,
     string Password,
-    string DestinationPath);
+    string DestinationPath,
+    byte[]? AnimationGif = null);
 
 public sealed record EncryptedBundlePackInfo(
     string Path,
@@ -68,7 +77,8 @@ public sealed record BundlePackArchiveInfo(
     byte[] IconPng,
     IReadOnlyList<BundlePackFile> PayloadFiles,
     ulong ArchiveSize,
-    ulong ExpandedSize);
+    ulong ExpandedSize,
+    byte[]? AnimationGif = null);
 
 public sealed class OpenedBundlePack : IDisposable
 {

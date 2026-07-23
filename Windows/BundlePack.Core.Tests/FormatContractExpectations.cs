@@ -8,6 +8,7 @@ internal sealed class FormatContractExpectations
 {
     public string FormatIdentifier { get; init; } = string.Empty;
     public int ManifestVersion { get; init; }
+    public AnimationExpectations Animation { get; init; } = new();
     public int MinimumPasswordCharacters { get; init; }
     public ContainerExpectations Container { get; init; } = new();
     public LimitExpectations Limits { get; init; } = new();
@@ -26,6 +27,16 @@ internal sealed class FormatContractExpectations
         Require(
             expectations.ManifestVersion == BundlePackConstants.FormatVersion,
             "The C# manifest version differs from Fixtures/FormatV1.json.");
+        Require(
+            expectations.Animation.ManifestVersion == BundlePackConstants.AnimatedFormatVersion
+                && expectations.Animation.Path == BundlePackConstants.AnimationPath
+                && expectations.Animation.MediaType == BundlePackConstants.AnimationMediaType
+                && expectations.Animation.MaximumCanvasDimension
+                    == BundlePackConstants.MaximumAnimationCanvasDimension
+                && expectations.Animation.MaximumFrames == BundlePackConstants.MaximumAnimationFrames
+                && expectations.Animation.MaximumTotalPixels
+                    == BundlePackConstants.MaximumAnimationTotalPixels,
+            "The C# animation contract differs from Fixtures/FormatV1.json.");
         Require(
             expectations.MinimumPasswordCharacters == BundlePackConstants.MinimumPasswordCharacters,
             "The C# password minimum differs from Fixtures/FormatV1.json.");
@@ -80,6 +91,16 @@ internal sealed class FormatContractExpectations
         public int FixedHeaderSize { get; init; }
         public uint Pbkdf2Iterations { get; init; }
         public uint PlaintextChunkSize { get; init; }
+    }
+
+    internal sealed class AnimationExpectations
+    {
+        public int ManifestVersion { get; init; }
+        public string Path { get; init; } = string.Empty;
+        public string MediaType { get; init; } = string.Empty;
+        public int MaximumCanvasDimension { get; init; }
+        public int MaximumFrames { get; init; }
+        public int MaximumTotalPixels { get; init; }
     }
 
     internal sealed class LimitExpectations

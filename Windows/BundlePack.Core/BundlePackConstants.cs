@@ -5,6 +5,13 @@ public static class BundlePackConstants
     public const string FileExtension = ".bundlepack";
     public const string FormatIdentifier = "com.tuki0918.bundlepack";
     public const int FormatVersion = 1;
+    public const int AnimatedFormatVersion = 2;
+
+    public const string AnimationPath = "animation.gif";
+    public const string AnimationMediaType = "image/gif";
+    public const int MaximumAnimationCanvasDimension = 1_024;
+    public const int MaximumAnimationFrames = 120;
+    public const int MaximumAnimationTotalPixels = 100_000_000;
 
     public const int MinimumPasswordCharacters = 12;
     public const int Pbkdf2Iterations = 600_000;

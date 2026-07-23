@@ -19,6 +19,7 @@ public static partial class BundlePackArchive
             ?? throw new BundlePackException(BundlePackError.MissingMetadata, "Required metadata is missing: manifest.json");
         var iconRecord = records.FirstOrDefault(record => record.Path == "icon.png")
             ?? throw new BundlePackException(BundlePackError.MissingMetadata, "Required metadata is missing: icon.png");
+        var animationRecord = records.FirstOrDefault(record => record.Path == BundlePackConstants.AnimationPath);
 
         if (manifestRecord.CompressionMethod != 0 || manifestRecord.UncompressedSize > BundlePackConstants.MaximumMetadataSize)
         {
@@ -28,6 +29,15 @@ public static partial class BundlePackArchive
         if (iconRecord.CompressionMethod != 0 || iconRecord.UncompressedSize > BundlePackConstants.MaximumMetadataSize)
         {
             throw new BundlePackException(BundlePackError.UnsupportedCompression, "icon.png must be stored without compression.");
+        }
+
+        if (animationRecord is not null
+            && (animationRecord.CompressionMethod != 0
+                || animationRecord.UncompressedSize > BundlePackConstants.MaximumMetadataSize))
+        {
+            throw new BundlePackException(
+                BundlePackError.UnsupportedCompression,
+                $"{BundlePackConstants.AnimationPath} must be stored without compression.");
         }
 
         try
@@ -70,10 +80,28 @@ public static partial class BundlePackArchive
                 throw new BundlePackException(BundlePackError.InvalidManifest, "manifest.json contains a null required value.");
             }
 
-            if (manifest.Format != BundlePackConstants.FormatIdentifier
-                || manifest.FormatVersion != BundlePackConstants.FormatVersion)
+            if (manifest.Format != BundlePackConstants.FormatIdentifier)
             {
                 throw new BundlePackException(BundlePackError.UnsupportedFormat, "This BundlePack version is not supported.");
+            }
+
+            var hasValidAnimationLayout = manifest.FormatVersion switch
+            {
+                BundlePackConstants.FormatVersion => manifest.Animation is null && animationRecord is null,
+                BundlePackConstants.AnimatedFormatVersion =>
+                    manifest.Animation is not null
+                    && manifest.Animation.Path == BundlePackConstants.AnimationPath
+                    && manifest.Animation.MediaType == BundlePackConstants.AnimationMediaType
+                    && animationRecord is not null,
+                _ => throw new BundlePackException(
+                    BundlePackError.UnsupportedFormat,
+                    "This BundlePack version is not supported.")
+            };
+            if (!hasValidAnimationLayout)
+            {
+                throw new BundlePackException(
+                    BundlePackError.InvalidManifest,
+                    "The animation metadata does not match the package contents.");
             }
 
             if (!FileHelpers.HasValidDisplayMetadata(
@@ -96,6 +124,12 @@ public static partial class BundlePackArchive
                 .OrderBy(file => file.Path, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
             ValidateManifestFiles(manifest, payloadFiles);
+            byte[]? animationGif = null;
+            if (animationRecord is not null)
+            {
+                animationGif = await ReadMetadataAsync(archive, animationRecord, cancellationToken).ConfigureAwait(false);
+                BundlePackAnimation.ValidateGif(animationGif);
+            }
             var expandedSize = records.Aggregate<ZipEntryRecord, ulong>(0, (current, record) => current + record.UncompressedSize);
 
             return new BundlePackArchiveInfo(
@@ -104,7 +138,8 @@ public static partial class BundlePackArchive
                 iconPng,
                 payloadFiles,
                 checked((ulong)new FileInfo(path).Length),
-                expandedSize);
+                expandedSize,
+                animationGif);
         }
         catch (OperationCanceledException)
         {
@@ -156,6 +191,18 @@ public static partial class BundlePackArchive
                 cancellationToken,
                 writeState,
                 reportProgress).ConfigureAwait(false);
+            var animationPath = Path.Combine(stagingDirectory, BundlePackConstants.AnimationPath);
+            if (File.Exists(animationPath))
+            {
+                await AddFileAsync(
+                    archive,
+                    animationPath,
+                    BundlePackConstants.AnimationPath,
+                    CompressionLevel.NoCompression,
+                    cancellationToken,
+                    writeState,
+                    reportProgress).ConfigureAwait(false);
+            }
 
             var payloadDirectory = Path.Combine(stagingDirectory, "payload");
             archive.CreateEntry("payload/", CompressionLevel.NoCompression).ExternalAttributes = 0;

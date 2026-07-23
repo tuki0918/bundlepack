@@ -4,6 +4,7 @@ public enum BundlePackError
 {
     NoInputFiles,
     InvalidIcon,
+    InvalidAnimation,
     PasswordTooShort,
     InvalidContainer,
     UnsupportedVersion,

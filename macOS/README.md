@@ -130,9 +130,13 @@ Each package can have its own icon:
 - BundlePack normalizes the image to a transparent 1024 × 1024 PNG and stores it as `icon.png`;
 - Finder uses the embedded icon for thumbnails, and BundlePack also applies it as the file's custom icon for compact list views.
 
-The macOS app supports PNG, JPEG, TIFF, HEIC, and SVG images. The package icon
-is always public, including in encrypted packages, because Finder must read it
-without a password. Do not use an image that contains private information.
+The macOS app supports PNG, JPEG, TIFF, HEIC, SVG, and animated GIF images. For
+a GIF, its first frame becomes the public `icon.png`; the animation plays only
+on BundlePack's validated Open screen and, for encrypted packages, only after
+unlock. Finder and standard Quick Look remain static, and Reduce Motion is
+respected. Animated WebP is not currently supported. The package icon is always
+public, including in encrypted packages, because Finder must read it without a
+password. Do not use an image that contains private information.
 
 Finder custom icons are also stored in macOS extended attributes. Some ZIP
 tools, cloud services, or non-Mac filesystems remove those attributes during

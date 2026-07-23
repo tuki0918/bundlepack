@@ -245,6 +245,7 @@ extension ZipArchiveInspector {
     private static func isAllowedBundlePackPath(_ path: String) -> Bool {
         path == "icon.png"
             || path == "manifest.json"
+            || path == BundlePackAnimationValidator.path
             || path == "payload/"
             || path.hasPrefix("payload/")
     }

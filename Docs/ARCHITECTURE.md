@@ -44,7 +44,7 @@ Windows WinUI app ─┘
 - `Windows/Scripts` contains optional per-user Windows shell registration tools.
 - `Windows/Tests` contains Windows-only shell and installer integration checks.
 - `Fixtures/Compatibility/macOS` contains macOS-created fixtures consumed by C# tests.
-- `Fixtures/FormatV1.json` contains neutral v1 constants verified by both native test suites.
+- `Fixtures/FormatV1.json` contains neutral v1/container constants and the additive v2 animation contract verified by both native test suites.
 - `Docs/FORMAT.md` is the normative cross-platform format contract.
 - `global.json` pins Windows command-line builds to the .NET 10 SDK family.
 - `Scripts` contains repository-wide cleanup, icon generation, and metadata validation tools.
@@ -101,6 +101,13 @@ for the published ZIP and EXE files.
 Format changes must update `Docs/FORMAT.md`, both native implementations, the
 fixture generators, and the bidirectional tests in the same pull request. A new
 incompatible layout requires a new container or manifest version.
+
+Static packages retain manifest version 1. Selecting an animated GIF writes a
+version 2 manifest and stores `animation.gif` inside the ZIP. The public
+`icon.png` contract and encrypted-container version remain unchanged, so Finder,
+Quick Look, and Explorer continue to use a bounded static image. Only the app's
+validated Open view consumes animation bytes; encrypted animation bytes are not
+available until unlock.
 
 ## Security boundaries
 

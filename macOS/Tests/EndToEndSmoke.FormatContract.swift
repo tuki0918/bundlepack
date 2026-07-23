@@ -4,10 +4,20 @@ extension EndToEndSmoke {
     struct FormatV1Expectations: Decodable {
         let formatIdentifier: String
         let manifestVersion: Int
+        let animation: Animation
         let minimumPasswordCharacters: Int
         let container: Container
         let limits: Limits
         let displayMetadataBytes: DisplayMetadataBytes
+
+        struct Animation: Decodable {
+            let manifestVersion: Int
+            let path: String
+            let mediaType: String
+            let maximumCanvasDimension: Int
+            let maximumFrames: Int
+            let maximumTotalPixels: Int
+        }
 
         struct Container: Decodable {
             let magic: String
@@ -48,6 +58,17 @@ extension EndToEndSmoke {
         try require(
             expectations.manifestVersion == BundlePackManifest.currentFormatVersion,
             "The Swift manifest version differs from Fixtures/FormatV1.json."
+        )
+        try require(
+            expectations.animation.manifestVersion == BundlePackManifest.animatedFormatVersion
+                && expectations.animation.path == BundlePackAnimationValidator.path
+                && expectations.animation.mediaType == BundlePackAnimationValidator.mediaType
+                && expectations.animation.maximumCanvasDimension
+                    == BundlePackAnimationValidator.maximumCanvasDimension
+                && expectations.animation.maximumFrames == BundlePackAnimationValidator.maximumFrames
+                && expectations.animation.maximumTotalPixels
+                    == BundlePackAnimationValidator.maximumTotalPixels,
+            "The Swift animation contract differs from Fixtures/FormatV1.json."
         )
         try require(
             expectations.minimumPasswordCharacters
